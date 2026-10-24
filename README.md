@@ -21,7 +21,7 @@ Download [`miller-and-bragg.html`](miller-and-bragg.html) and open it in any mod
 
 If you use or adapt this resource, please cite it:
 
-> Nockemann, P. (2026). *Miller & Bragg: Interactive Crystallography from Miller Indices to X-ray Diffraction* (Version 1.0.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.23620323
+> Nockemann, P. (2026). *Miller & Bragg: Interactive Crystallography from Miller Indices to X-ray Diffraction* (Version 1.1.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.23620323
 
 See also [`CITATION.cff`](CITATION.cff), or use **Cite this repository** on the GitHub page.
 
