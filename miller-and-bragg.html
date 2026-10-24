@@ -177,6 +177,7 @@ dialog { border: 1px solid var(--line); border-radius: 12px; background: var(--s
 dialog::backdrop { background: rgba(8, 16, 18, .55); }
 .dlg-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
 .dlg-head h2 { font: 600 20px var(--font-display); margin: 0; }
+#fbFrame { display: block; width: 100%; height: min(70vh, 760px); border: 1px solid var(--line); border-radius: 8px; background: #fff; }
 .dlg-img { margin: 12px 0; border: 1px solid var(--line); border-radius: 8px; overflow: auto; background: #fff; }
 .dlg-img img { display: block; width: 100%; height: auto; }
 #dlgMsg { font-size: 13.5px; color: var(--muted); }
@@ -423,6 +424,7 @@ img { max-width: 100%; }
         </div>
         <button id="openManual" class="ghost">Manual</button>
         <button id="openCite" class="ghost">Cite</button>
+        <button id="openFeedback" class="ghost" hidden>Feedback</button>
       </div>
     </div>
   </header>
@@ -1170,7 +1172,7 @@ img { max-width: 100%; }
         <h2>About</h2>
         <p>Miller &amp; Bragg is an interactive tool for teaching Miller indices and X-ray diffraction, from lattice planes to the peaks of a powder pattern and the spots of a single crystal. It is named after William Hallowes Miller, who introduced the indices in 1839, and William Henry and William Lawrence Bragg, whose work of 1912–13 gave Bragg's law, the link between the planes and the diffraction peaks. It draws the section of any lattice plane inside a unit cell, takes students through the indexing procedure one step at a time, generates matching exercises with targeted feedback, and connects planes to diffraction, planar density, slip and non-cubic cells.</p>
         <p>It is written for undergraduate and taught postgraduate courses in chemistry, materials science, physics and engineering. Lecturers can use it live in lectures, set it for self-study, or copy its figures into quizzes and slides.</p>
-        <p>The whole tool is a single HTML file. It needs no installation or account, uses your computer's own fonts, works offline, and sends nothing anywhere. It remembers only two preferences in your browser: whether you have seen the tour, and whether Single plane shows all its cards.</p>
+        <p>The whole tool is a single HTML file. It needs no installation or account, uses your computer's own fonts, works offline, and sends nothing anywhere. The one exception is the optional Feedback form: an anonymous Google Form that loads from Google only when you press Feedback. It remembers only two preferences in your browser: whether you have seen the tour, and whether Single plane shows all its cards.</p>
       </section>
 
       <section id="man-start">
@@ -1601,6 +1603,15 @@ img { max-width: 100%; }
   </div>
 </dialog>
 
+<dialog id="fbDlg" aria-labelledby="fbTitle">
+  <div class="dlg-head">
+    <h2 id="fbTitle">Feedback</h2>
+    <button id="fbClose" class="ghost">Close</button>
+  </div>
+  <p class="fine" style="margin:0 0 12px">The form is anonymous and takes about five minutes. It is a Google Form, so it loads from Google only when you open this window. If it does not appear below, <a id="fbNewTab" target="_blank" rel="noopener">open the form in a new tab</a>.</p>
+  <iframe id="fbFrame" title="Feedback form"></iframe>
+</dialog>
+
 <script>
 (() => {
   const DEG = Math.PI / 180;
@@ -1623,7 +1634,8 @@ img { max-width: 100%; }
     authorTitle: "Prof.",
     orcid: "0000-0001-9864-9702",
     affiliation: "Queen's University Belfast, UK",
-    doi: "",      // the Zenodo concept DOI, e.g. "10.5281/zenodo.1234567", once the first GitHub release is archived
+    doi: "10.5281/zenodo.23620323",      // the Zenodo concept DOI: resolves to the latest version
+    feedback: "",      // the Google Form's /viewform address; the Feedback button stays hidden while this is empty
     repo: "https://github.com/nockemann-lab/miller-and-bragg",
     url: "https://nockemann-lab.github.io/miller-and-bragg/",
     licence: "CC BY 4.0",
@@ -4547,6 +4559,16 @@ img { max-width: 100%; }
   document.querySelectorAll("[data-man]").forEach((b) => b.addEventListener("click", () => openManual(b.dataset.man)));
   $("#openManual").addEventListener("click", () => openManual("man-start"));
   $("#openCite").addEventListener("click", () => openManual("man-cite"));
+  if (APP.feedback) {
+    $("#openFeedback").hidden = false;
+    $("#fbNewTab").href = APP.feedback;
+    $("#openFeedback").addEventListener("click", () => {
+      const f = $("#fbFrame");
+      if (!f.src) f.src = APP.feedback + (APP.feedback.includes("?") ? "&" : "?") + "embedded=true";
+      $("#fbDlg").showModal();
+    });
+    $("#fbClose").addEventListener("click", () => $("#fbDlg").close());
+  }
   $("#manClose").addEventListener("click", () => $("#manual").close());
   manText.addEventListener("scroll", () => {
     let cur = "man-about";
