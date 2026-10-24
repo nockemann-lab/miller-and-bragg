@@ -1172,7 +1172,7 @@ img { max-width: 100%; }
         <h2>About</h2>
         <p>Miller &amp; Bragg is an interactive tool for teaching Miller indices and X-ray diffraction, from lattice planes to the peaks of a powder pattern and the spots of a single crystal. It is named after William Hallowes Miller, who introduced the indices in 1839, and William Henry and William Lawrence Bragg, whose work of 1912–13 gave Bragg's law, the link between the planes and the diffraction peaks. It draws the section of any lattice plane inside a unit cell, takes students through the indexing procedure one step at a time, generates matching exercises with targeted feedback, and connects planes to diffraction, planar density, slip and non-cubic cells.</p>
         <p>It is written for undergraduate and taught postgraduate courses in chemistry, materials science, physics and engineering. Lecturers can use it live in lectures, set it for self-study, or copy its figures into quizzes and slides.</p>
-        <p>The whole tool is a single HTML file. It needs no installation or account, uses your computer's own fonts, works offline, and sends nothing anywhere. The one exception is the optional Feedback form: an anonymous Google Form that loads from Google only when you press Feedback. It remembers only two preferences in your browser: whether you have seen the tour, and whether Single plane shows all its cards.</p>
+        <p>The whole tool is a single HTML file. It needs no installation or account, uses your computer's own fonts, works offline, and sends nothing anywhere. The one exception is the optional Feedback form: an anonymous Microsoft Form that loads from Microsoft only when you press Feedback. It remembers only two preferences in your browser: whether you have seen the tour, and whether Single plane shows all its cards.</p>
       </section>
 
       <section id="man-start">
@@ -1608,7 +1608,7 @@ img { max-width: 100%; }
     <h2 id="fbTitle">Feedback</h2>
     <button id="fbClose" class="ghost">Close</button>
   </div>
-  <p class="fine" style="margin:0 0 12px">The form is anonymous and takes about five minutes. It is a Google Form, so it loads from Google only when you open this window. If it does not appear below, <a id="fbNewTab" target="_blank" rel="noopener">open the form in a new tab</a>.</p>
+  <p class="fine" style="margin:0 0 12px">The form is anonymous and takes about five minutes. It is a Microsoft Form, so it loads from Microsoft only when you open this window. If it does not appear below, <a id="fbNewTab" target="_blank" rel="noopener">open the form in a new tab</a>.</p>
   <iframe id="fbFrame" title="Feedback form"></iframe>
 </dialog>
 
@@ -1635,7 +1635,8 @@ img { max-width: 100%; }
     orcid: "0000-0001-9864-9702",
     affiliation: "Queen's University Belfast, UK",
     doi: "10.5281/zenodo.23620323",      // the Zenodo concept DOI: resolves to the latest version
-    feedback: "",      // the Google Form's /viewform address; the Feedback button stays hidden while this is empty
+    feedback: "https://forms.cloud.microsoft/e/UvhCAXTyM2",      // the feedback form; the Feedback button stays hidden while this is empty
+    feedbackEmbed: "https://forms.cloud.microsoft/pages/responsepage.aspx?id=6ner6qW040mh6NbdI6Hyho0WDUoTm7lGg7BcchpIoiRUNVQxT1pETEUxU1ZIS1c5VzdLQ0dBQTlaSi4u&embed=true",      // the same form for the Feedback window
     repo: "https://github.com/nockemann-lab/miller-and-bragg",
     url: "https://nockemann-lab.github.io/miller-and-bragg/",
     licence: "CC BY 4.0",
@@ -4564,7 +4565,7 @@ img { max-width: 100%; }
     $("#fbNewTab").href = APP.feedback;
     $("#openFeedback").addEventListener("click", () => {
       const f = $("#fbFrame");
-      if (!f.src) f.src = APP.feedback + (APP.feedback.includes("?") ? "&" : "?") + "embedded=true";
+      if (!f.src) f.src = APP.feedbackEmbed || APP.feedback;
       $("#fbDlg").showModal();
     });
     $("#fbClose").addEventListener("click", () => $("#fbDlg").close());
