@@ -29,8 +29,8 @@ keywords:
   - materials science education
 license: CC-BY-4.0
 version: "1.0.0"
-# Add after the first GitHub release has been archived by Zenodo:
-# doi: 10.5281/zenodo.XXXXXXX
-# date-released: "2026-MM-DD"
+# Concept DOI: resolves to the latest version on Zenodo.
+doi: 10.5281/zenodo.23620323
+date-released: "2026-10-24"
 repository-code: "https://github.com/nockemann-lab/miller-and-bragg"
 url: "https://nockemann-lab.github.io/miller-and-bragg/"
