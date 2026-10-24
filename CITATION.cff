@@ -1,0 +1,36 @@
+cff-version: 1.2.0
+message: "If you use or adapt this resource, please cite it as below."
+title: "Miller & Bragg: Interactive Crystallography from Miller Indices to X-ray Diffraction"
+type: software
+authors:
+  - given-names: Peter
+    family-names: Nockemann
+    affiliation: "Queen's University Belfast, UK"
+    orcid: "https://orcid.org/0000-0001-9864-9702"
+abstract: >-
+  An interactive, single-file teaching tool for Miller indices and X-ray
+  diffraction, for undergraduate and taught postgraduate courses in chemistry,
+  materials science, physics and engineering. It draws the section of any
+  lattice plane inside a unit cell, takes students through indexing one step
+  at a time, generates matching exercises, question banks for Canvas and
+  Moodle and printable worksheets, covers tetragonal, orthorhombic and
+  hexagonal (Miller-Bravais) cells, and links planes to diffraction: a Bragg's
+  law simulator with a simulated powder pattern, a powder-indexing exercise,
+  and single-crystal diffraction with the Ewald construction and rotation
+  photographs. It runs offline in any browser and needs no installation.
+keywords:
+  - crystallography
+  - Miller indices
+  - X-ray diffraction
+  - Bragg's law
+  - Ewald sphere
+  - powder diffraction
+  - chemistry education
+  - materials science education
+license: CC-BY-4.0
+version: "1.0.0"
+# Add after the first GitHub release has been archived by Zenodo:
+# doi: 10.5281/zenodo.XXXXXXX
+# date-released: "2026-MM-DD"
+repository-code: "https://github.com/nockemann-lab/miller-and-bragg"
+url: "https://nockemann-lab.github.io/miller-and-bragg/"
