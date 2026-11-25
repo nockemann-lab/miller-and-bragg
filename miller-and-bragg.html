@@ -933,7 +933,13 @@ img { max-width: 100%; }
 
         </div>
 
-        <div class="card pad x-o5" id="xStatus">
+        <div class="card pad x-o5" id="xWaveCard">
+          <div class="lbl">Path difference and interference</div>
+          <canvas id="cv-wave" aria-label="Bragg construction and the waves scattered by each layer of atoms"></canvas>
+          <p class="fine" id="xWaveCap"></p>
+        </div>
+
+        <div class="card pad x-o6" id="xStatus">
           <div class="lbl">Bragg condition</div>
           <p class="status" id="xState"></p>
           <p class="sbody" id="xWhy"></p>
@@ -947,12 +953,6 @@ img { max-width: 100%; }
           <p class="fine">Intensity scattered by these planes at this angle. 100% means every atom in the cell scatters in phase.</p>
           <div class="lbl sub">Orders of these planes</div>
           <div class="eqchips" id="xOrders" style="margin:0"></div>
-        </div>
-
-        <div class="card pad x-o6" id="xWaveCard">
-          <div class="lbl">Path difference and interference</div>
-          <canvas id="cv-wave" aria-label="Bragg construction and the waves scattered by each layer of atoms"></canvas>
-          <p class="fine" id="xWaveCap"></p>
         </div>
       </div>
     </div>
