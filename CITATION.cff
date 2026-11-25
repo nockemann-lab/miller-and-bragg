@@ -28,9 +28,9 @@ keywords:
   - chemistry education
   - materials science education
 license: CC-BY-4.0
-version: "1.1.0"
+version: "1.1.1"
 # Concept DOI: resolves to the latest version on Zenodo.
 doi: 10.5281/zenodo.23620323
-date-released: "2026-10-24"
+date-released: "2026-11-25"
 repository-code: "https://github.com/nockemann-lab/miller-and-bragg"
 url: "https://nockemann-lab.github.io/miller-and-bragg/"
