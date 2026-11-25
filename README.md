@@ -12,6 +12,7 @@ An interactive, single-file teaching tool for Miller indices and X-ray diffracti
 - Generates matching exercises, question banks for Canvas and Moodle, and printable worksheets
 - Covers tetragonal, orthorhombic and hexagonal (Miller–Bravais) cells
 - Links planes to diffraction: a Bragg's law simulator with a simulated powder pattern, a powder-indexing exercise, and single-crystal diffraction with the Ewald construction and rotation photographs
+- Shows a four-circle diffractometer (ω, χ, φ and the 2θ detector arm) and brings any (h k l) into the diffracting position
 
 ## Usage
 
@@ -21,7 +22,7 @@ Download [`miller-and-bragg.html`](miller-and-bragg.html) and open it in any mod
 
 If you use or adapt this resource, please cite it:
 
-> Nockemann, P. (2026). *Miller & Bragg: Interactive Crystallography from Miller Indices to X-ray Diffraction* (Version 1.1.1) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.23620323
+> Nockemann, P. (2026). *Miller & Bragg: Interactive Crystallography from Miller Indices to X-ray Diffraction* (Version 1.2.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.23620323
 
 See also [`CITATION.cff`](CITATION.cff), or use **Cite this repository** on the GitHub page.
 

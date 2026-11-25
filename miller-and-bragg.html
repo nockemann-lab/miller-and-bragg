@@ -354,6 +354,23 @@ table.xlist { width: 100%; max-width: none; margin: 0; }
 #sListWrap { max-height: 260px; }
 @media (max-width: 860px) { #cv-sxd { aspect-ratio: 1.45 / 1; } #cv-ewald { aspect-ratio: 1.45 / 1; } }
 
+/* Four-circle diffractometer */
+#cv-fc { aspect-ratio: 1.75 / 1; }
+#cv-fcew { display: block; width: 100%; aspect-ratio: 1.08 / 1; touch-action: pan-y; cursor: grab; }
+#cv-fcdet { display: block; width: 100%; aspect-ratio: 1 / 1; cursor: pointer; }
+#cv-fc.locked, #cv-fc.locked:active, #cv-fcew.locked { cursor: default; }
+#fListWrap { max-height: 260px; }
+.gon { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; }
+.gon-row { display: grid; grid-template-columns: 2.6em minmax(80px, 1fr) 4.4em auto; align-items: center; gap: 8px; }
+.gon-row.off { opacity: .45; }
+.gon-name { display: flex; align-items: center; gap: 6px; font: 600 17px var(--font-mono); }
+.gon-name i { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.gon-row input[type=range] { width: 100%; min-width: 0; accent-color: var(--plane); }
+.gon-row output { font: 500 14px var(--font-mono); text-align: right; }
+.gon-row .btns { flex-wrap: nowrap; gap: 4px; }
+@media (max-width: 860px) { #cv-fc { aspect-ratio: 1.25 / 1; } #cv-fcew { aspect-ratio: 1.45 / 1; } }
+@media (max-width: 560px) { .gon-row { grid-template-columns: 2.6em minmax(0, 1fr) 4.4em; } .gon-row .btns { grid-column: 2 / -1; justify-content: flex-end; } }
+
 /* Peaks to planes worksheet */
 #cv-index { display: block; width: 100%; aspect-ratio: 2.1 / 1; cursor: pointer; touch-action: pan-y; }
 .isheet { width: 100%; max-width: none; margin: 0; }
@@ -444,6 +461,7 @@ img { max-width: 100%; }
     <button role="tab" id="tab-xrd" aria-selected="false" aria-controls="view-xrd">X-ray diffraction</button>
     <button role="tab" id="tab-index" aria-selected="false" aria-controls="view-index">Peaks to planes</button>
     <button role="tab" id="tab-sxd" aria-selected="false" aria-controls="view-sxd">Single crystal</button>
+    <button role="tab" id="tab-fc" aria-selected="false" aria-controls="view-fc">4-circle SCXRD</button>
   </div>
 
   <!-- ===================== Single plane ===================== -->
@@ -1117,6 +1135,92 @@ img { max-width: 100%; }
     </div>
   </section>
 
+  <section id="view-fc" role="tabpanel" aria-labelledby="tab-fc" hidden>
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div class="card stage" id="fSetupCard">
+        <canvas id="cv-fc" tabindex="0" aria-label="Four-circle diffractometer: the X-ray source on the left, the crystal on an Eulerian cradle with its ω, χ and φ circles, and the detector on the 2θ arm. Drag or use the arrow keys to turn the crystal."></canvas>
+        <div class="stage-foot">
+          <span class="fine" id="fHint"></span>
+          <div class="btns"><button id="fStop" class="primary" hidden>Stop scan</button></div>
+        </div>
+      </div>
+      <div class="xgrid">
+        <div class="xcol">
+          <div class="card pad x-o1" id="fGonioCard">
+            <div class="lbl">Goniometer</div>
+            <div class="checks" role="radiogroup" aria-label="How the crystal turns">
+              <label class="check"><input type="radio" name="fMode" value="free" checked> Free rotation: drag the crystal in any direction</label>
+              <label class="check"><input type="radio" name="fMode" value="gonio"> Four-circle: turn the crystal only about ω, χ and φ</label>
+            </div>
+            <div class="gon">
+              <div class="gon-row" data-ax="om"><span class="gon-name"><i style="background:var(--plane)"></i>ω</span><input type="range" min="-180" max="180" step="0.1" value="0" aria-label="ω: turns the whole cradle about the vertical axis"><output></output><span class="btns"><button class="ghost small" data-step="-1" aria-label="Decrease ω by 1 degree">−1°</button><button class="ghost small" data-step="1" aria-label="Increase ω by 1 degree">+1°</button><button class="ghost small" data-scan>Scan</button></span></div>
+              <div class="gon-row" data-ax="chi"><span class="gon-name"><i style="background:var(--ok)"></i>χ</span><input type="range" min="-180" max="180" step="0.1" value="0" aria-label="χ: tilts the φ axis around the cradle ring"><output></output><span class="btns"><button class="ghost small" data-step="-1" aria-label="Decrease χ by 1 degree">−1°</button><button class="ghost small" data-step="1" aria-label="Increase χ by 1 degree">+1°</button><button class="ghost small" data-scan>Scan</button></span></div>
+              <div class="gon-row" data-ax="phi"><span class="gon-name"><i style="background:var(--mark)"></i>φ</span><input type="range" min="-180" max="180" step="0.1" value="0" aria-label="φ: spins the crystal about its mounting pin"><output></output><span class="btns"><button class="ghost small" data-step="-1" aria-label="Decrease φ by 1 degree">−1°</button><button class="ghost small" data-step="1" aria-label="Increase φ by 1 degree">+1°</button><button class="ghost small" data-scan>Scan</button></span></div>
+              <div class="gon-row" data-ax="arm"><span class="gon-name"><i style="background:var(--edge)"></i>2θ</span><input type="range" min="-150" max="150" step="0.1" value="20" aria-label="2θ: swings the detector arm about the vertical axis"><output></output><span class="btns"><button class="ghost small" data-step="-1" aria-label="Decrease the detector angle by 1 degree">−1°</button><button class="ghost small" data-step="1" aria-label="Increase the detector angle by 1 degree">+1°</button></span></div>
+            </div>
+            <p class="fine" style="margin:12px 0 0"><b>ω</b> turns the whole cradle about the vertical axis. <b>χ</b> tilts the φ axis around the cradle ring. <b>φ</b> spins the crystal about its mounting pin. <b>2θ</b> swings the detector arm about the same vertical axis as ω, and works in both modes.</p>
+            <div class="lbl sub">Bring a reflection into the diffracting position</div>
+            <div class="hkl-in">(
+              <label><input id="fh" type="number" min="-9" max="9" step="1" value="2"><span>h</span></label>
+              <label><input id="fk" type="number" min="-9" max="9" step="1" value="0"><span>k</span></label>
+              <label><input id="fl" type="number" min="-9" max="9" step="1" value="0"><span>l</span></label>)
+            </div>
+            <div class="btns" style="margin-top:10px"><button id="fBring" class="primary">Bring into position</button><button id="fZero" class="ghost">Set ω, χ and φ to zero</button></div>
+            <p class="sbody" id="fBringMsg" style="margin-top:12px"></p>
+          </div>
+          <div class="card x-o3" id="fEwaldCard">
+            <div class="xhead"><div class="lbl" style="margin:0">Ewald construction</div><span class="fine">reciprocal space, same orientation as the crystal</span></div>
+            <canvas id="cv-fcew" tabindex="0" aria-label="Ewald sphere and the reciprocal lattice of the crystal. Drag to turn the crystal in free rotation."></canvas>
+            <p class="fine pad" style="padding-top:4px">Each dot is a reciprocal lattice point (h k l), 1/d from the origin O; bigger dots give stronger reflections. A reflection occurs when its point lies on the Ewald sphere of radius 1/λ. In the bisecting position the point lies in the horizontal plane, and G bisects the angle between −k₀ and the diffracted beam.</p>
+          </div>
+          <div class="card pad x-o5" id="fControls">
+            <div class="lbl">Crystal, X-rays and detector</div>
+            <div class="xfields">
+              <div class="field"><label for="fLat">Structure</label>
+                <select id="fLat"><option value="sc">Simple cubic</option><option value="bcc">Body-centred cubic</option><option value="fcc">Face-centred cubic</option><option value="nacl" selected>Rock salt (NaCl)</option><option value="cscl">Caesium chloride</option><option value="diamond">Diamond</option></select></div>
+              <div class="field"><label for="fA">Cell edge <span class="sym">a</span> (Å)</label><input id="fA" type="number" step="0.001" min="2" max="20" value="5.6402"></div>
+              <div class="field"><label for="fSrc">X-ray source</label>
+                <select id="fSrc"><option value="mo" selected>Mo Kα₁, 0.7093 Å</option><option value="ag">Ag Kα₁, 0.5594 Å</option><option value="cu">Cu Kα₁, 1.5406 Å</option></select></div>
+            </div>
+            <div class="xfields" style="margin-top:12px">
+              <div class="field"><label for="fD">Detector distance: <span id="fDOut">60 mm</span></label><input id="fD" type="range" min="40" max="120" step="1" value="60"></div>
+              <div class="field"><label for="fEta">Mosaic spread: <span id="fEtaOut">0.4°</span></label><input id="fEta" type="range" min="0.1" max="2" step="0.1" value="0.4"></div>
+            </div>
+            <div class="lbl" style="margin:8px 0 8px">Mount the crystal</div>
+            <div class="btns">
+              <button class="ghost small" data-mount="0,0,1">Axis c along φ</button>
+              <button class="ghost small" data-mount="1,1,0">[1 1 0] along φ</button>
+              <button class="ghost small" data-mount="1,1,1">[1 1 1] along φ</button>
+              <button class="ghost small" data-mount="random">Random</button>
+            </div>
+            <p class="fine" id="fEx" style="margin-top:10px"></p>
+          </div>
+        </div>
+        <div class="xcol">
+          <div class="card x-o2" id="fDetCard">
+            <div class="xhead"><div class="lbl" style="margin:0">Detector image</div><span class="fine">seen from the crystal · curves mark 2θ</span></div>
+            <canvas id="cv-fcdet" tabindex="0" aria-label="Detector image with diffraction spots. Click a spot to show its planes."></canvas>
+            <div class="stage-foot">
+              <label class="check"><input type="checkbox" id="fAcc"> Collect spots while rotating</label>
+              <div class="btns"><button id="fClear" class="ghost small">Clear detector</button></div>
+            </div>
+          </div>
+          <div class="card pad x-o4" id="fStatus">
+            <div class="lbl">Reflections in diffracting position</div>
+            <p class="status" id="fHead"></p>
+            <div class="xlist-wrap" id="fListWrap">
+              <table class="ic xlist">
+                <thead><tr><th>Reflection</th><th>d (Å)</th><th>2θ (°)</th><th>I (%)</th><th>Spot</th></tr></thead>
+                <tbody id="fList"></tbody>
+              </table>
+            </div>
+            <p class="sbody" id="fWhy" style="margin-top:12px"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <footer class="foot">
     <span id="footLine"></span>
     <button class="link" data-man="man-cite">How to cite</button>
@@ -1158,6 +1262,7 @@ img { max-width: 100%; }
       <button data-man="man-xrd">X-ray diffraction</button>
       <button data-man="man-index">Peaks to planes</button>
       <button data-man="man-sxd">Single crystal</button>
+      <button data-man="man-fc">4-circle SCXRD</button>
       <button data-man="man-share">Links and worksheets</button>
       <button data-man="man-theory">Theory reference</button>
       <button data-man="man-teach">Teaching ideas</button>
@@ -1392,10 +1497,34 @@ img { max-width: 100%; }
         <p>Every family of planes (h k l) is represented by one point of the reciprocal lattice, a vector G from the origin O that is normal to the planes and 1/d long. The incident beam is the vector k₀, length 1/λ, ending at O. The Ewald sphere has radius 1/λ and is centred at C, the start of k₀. When a reciprocal lattice point lies on the sphere, the diffracted beam runs from C to that point, k = k₀ + G, and Bragg's law holds: |G| = 1/d = 2 sin θ/λ. Rotating the crystal rotates the reciprocal lattice about O, so points sweep through the sphere one after another. <b>Reciprocal lattice</b> shows all points or one layer through O. Bigger dots give stronger reflections; red rings mark points on the sphere whose reflection is systematically absent.</p>
         <h3>The detector image</h3>
         <p>The detector is a 100 mm square, seen from the crystal, with rings of constant 2θ. A spot's distance from the centre is D tan 2θ for a detector at distance D. A still crystal gives only the few spots whose points touch the sphere. Tick <b>Collect spots while rotating</b> and press <b>Rotate</b> to keep every spot as it flashes up: one full turn about a crystal axis gives a rotation photograph, with the spots on curved layer lines (straight on a cylindrical film, hyperbolas on a flat detector). Each spot is recorded where its reciprocal lattice point actually crosses the sphere, so it does not matter how fast or in what steps the crystal turns, and every reflection that the turn can reach appears twice, once as its point enters the sphere and once as it leaves. Spots can lie close together: reflections with similar d on the same layer line, such as (4 0 0) and (4 2 0) of rock salt with Mo Kα, really are only a few millimetres apart on a flat detector 60 mm away. Symmetry-equivalent reflections such as (2 0 0), (0 2 0), (−2 0 0) and (0 −2 0) even land on exactly the same point when the crystal turns about c. Click a collected spot to list the reflections in it. Click a live spot, or a row of the list, to select its reflection; <b>Follow the strongest spot again</b> undoes the choice.</p>
+        <p>Dragging the crystal in every direction while collecting builds rings instead of layer lines, like a powder pattern: see <b>Why free tumbling gives powder rings</b> under 4-circle SCXRD.</p>
         <h3>Intensities</h3>
         <p>A reflection's strength is |F|² × the polarisation factor (1 + cos² 2θ)/2 × a common fall-off with angle. Live spots show the momentary intensity of a mosaic crystal. It also falls as 1/sin 2θ: the spread of block orientations smears each reciprocal lattice point across the sphere over a distance proportional to |G| cos θ, that is to sin 2θ, so at any moment a smaller share of a high-angle point touches the sphere. Collected spots show the integrated intensity of the whole pass through the sphere, which includes the Lorentz factor: the time the point takes to cross the sphere. For spots on the equator of the detector this is 1/sin 2θ; above and below it, points circle the axis more slowly, so at the same 2θ their spots are stronger. Spots that land on the same point add up, and the collected image is scaled to its strongest spot, like the contrast of a detector.</p>
         <h3>Settings</h3>
         <p><b>X-ray source:</b> Mo Kα is the usual single-crystal source. The app uses the Kα₁ line, 0.7093 Å; diffractometer software normally uses the Kα mean, 0.71073 Å, which shifts 2θ by about 0.2%. Ag Kα reaches further into reciprocal space; with Cu Kα the sphere is small, and a cubic metal gives very few spots. <b>Detector distance</b> sets the largest 2θ caught in the corners: a closer detector catches more. <b>Mosaic spread</b> is the small misalignment of the blocks in a real crystal, given here as the standard deviation of their orientations; it sets how far a point can be from the sphere and still diffract, so a larger value makes spots last longer while the crystal turns. It changes how long a spot is lit, not where collected spots fall or how strong they are. <b>Orientation</b> puts c, [1 1 0] or [1 1 1] vertical, or picks a random orientation.</p>
+      </section>
+
+      <section id="man-fc">
+        <h2>4-circle SCXRD</h2>
+        <p>In the Single crystal tab you can drag the crystal in any direction. A real single-crystal diffractometer cannot do that: it holds the crystal on a goniometer that turns it only about a few fixed axes. This tab shows the classic four-circle diffractometer with an Eulerian cradle, so you can see which turns are possible and how a chosen reflection is brought into the diffracting position.</p>
+        <h3>The four circles</h3>
+        <ul>
+          <li><b>ω (omega)</b> turns the whole cradle about the vertical axis.</li>
+          <li><b>χ (chi)</b> is the large ring. Moving the carriage round it tilts the φ axis, about the horizontal axis that lies along the X-ray beam when ω = 0.</li>
+          <li><b>φ (phi)</b> spins the crystal about its mounting pin, which is vertical when χ = 0.</li>
+          <li><b>2θ (two-theta)</b> swings the detector arm about the same vertical axis as ω. It moves the detector, not the crystal.</li>
+        </ul>
+        <p>The crystal's orientation is R = Ω(ω) Χ(χ) Φ(φ) U (the Busing–Levy convention), where U describes how the crystal is mounted on the pin. <b>Mount the crystal</b> sets U with c, [1 1 0] or [1 1 1] along the φ axis, or at random, and sets the three angles to zero.</p>
+        <h3>Free rotation and four-circle mode</h3>
+        <p>Free rotation is on to start with, as in the Single crystal tab: dragging turns the crystal in any direction while the circles stay where they are. Choose <b>Four-circle</b> to turn the crystal only with the circles. The sliders and ±1° buttons set each angle, and <b>Scan</b> turns one circle steadily, as in a real ω or φ scan. The arrow keys turn ω (left and right) and χ (up and down). The detector arm works in both modes.</p>
+        <h3>Bringing a reflection into position</h3>
+        <p>Type (h k l) and press <b>Bring into position</b>. The app uses the bisecting geometry of four-circle data collection. φ turns the plane normal G round until its horizontal part points across the beam, χ tilts it into the horizontal plane, and ω = θ turns it to bisect the angle between the incident and the diffracted beam. The detector arm then goes to 2θ, and the spot lands in the middle of the detector. With sodium chloride and Mo Kα₁, (2 0 0) needs θ = 7.22° and 2θ = 14.45°. A reflection with d shorter than λ/2 cannot be reached at any setting, and a systematically absent reflection is placed correctly but gives no spot.</p>
+        <h3>The detector on the arm</h3>
+        <p>The detector is a flat 100 mm square at distance D, always facing the crystal along the arm. With the arm at zero it is the detector of the Single crystal tab, with the straight-through beam in the middle. Swung out, it catches higher angles; the note under the settings gives the range of 2θ it covers. Curves of constant 2θ are cones about the beam, so on the tilted plate they become ellipses and hyperbolas rather than circles. Moving the arm or changing the distance starts a new image, because each detector position records its own frame. Tick <b>Collect spots while rotating</b> and scan one circle to record a frame.</p>
+        <h3>Why free tumbling gives powder rings</h3>
+        <p>Turning the crystal about one axis sweeps each reciprocal lattice point round a circle, which gives spots on layer lines. Turning it in every direction sweeps each point over a whole sphere of radius 1/d, and that sphere meets the Ewald sphere in a circle. Every reflection then lands on a cone of half-angle 2θ, and the collected spots fill rings like a powder pattern: one crystal tumbled over time samples the orientations that a powder holds all at once. The Gandolfi camera uses this to record a powder pattern from a single small crystal. The ring positions are exact; how dense each ring looks depends on how evenly the crystal was turned, so the intensities are only qualitative.</p>
+        <h3>Simplifications</h3>
+        <p>The cradle has full χ and φ circles and nothing ever collides, and the detector arm stops at ±150°. Real instruments limit χ and 2θ, and most modern ones use a kappa goniometer, which reaches the same orientations with a different set of angles. The crystal and detector are drawn enlarged in the picture of the instrument; positions on the detector image are to scale.</p>
       </section>
 
       <section id="man-share">
@@ -1539,6 +1668,7 @@ img { max-width: 100%; }
         <h3>Version history</h3>
         <table class="ic man-table">
           <tbody>
+            <tr><td>1.2.0</td><td>November 2026. New 4-circle SCXRD tab: a four-circle diffractometer with an Eulerian cradle (ω, χ, φ) and a detector on a swinging 2θ arm. Free rotation or four-circle mode, ω, χ and φ scans, and Bring (h k l) into the diffracting position. The manual explains why a freely tumbled crystal gives powder rings.</td></tr>
             <tr><td>1.1.1</td><td>November 2026. X-ray diffraction: the path difference and interference card now comes before the Bragg condition card.</td></tr>
             <tr><td>1.1.0</td><td>October 2026. Feedback button with an optional, anonymous survey, loaded only when opened; the Zenodo DOI in the citation and footer.</td></tr>
             <tr><td>1.0.0</td><td>October 2026. First public release: single plane with six cubic structures, directions, families and equivalent planes; step-by-step practice; matching sets with question-bank export for Canvas and Moodle; tetragonal, orthorhombic and hexagonal cells with hcp atoms and four-index directions; X-ray diffraction simulator with a simulated powder pattern; Peaks to planes indexing exercise; single-crystal diffraction with the Ewald construction and rotation photographs; directions practice; shareable links; printable worksheets; guided tour; manual and glossary.</td></tr>
@@ -1629,7 +1759,7 @@ img { max-width: 100%; }
   /* ---------- release details: edit these when publishing a new version ---------- */
   const APP = {
     name: "Miller & Bragg",
-    version: "1.1.1",
+    version: "1.2.0",
     year: "2026",
     authorFamily: "Nockemann",
     authorGiven: "Peter",
@@ -1875,10 +2005,10 @@ img { max-width: 100%; }
     const cs = getComputedStyle(document.documentElement);
     const g = (n) => cs.getPropertyValue(n).trim();
     return { bg: g("--surface"), ink: g("--ink"), edge: g("--edge"), hidden: g("--hidden"), plane: g("--plane"), planeEdge: g("--plane-edge"), planeAlpha: 0.78, mark: g("--mark"), bad: g("--bad"),
-      hit: g("--hit"), inph: g("--inph"), atom: g("--atom"), dir: g("--dir"), muted: g("--muted"), line: g("--line"), soft: g("--soft") };
+      hit: g("--hit"), inph: g("--inph"), atom: g("--atom"), dir: g("--dir"), muted: g("--muted"), line: g("--line"), soft: g("--soft"), ok: g("--ok") };
   }
   const PRINT = { bg: "#ffffff", ink: "#111111", edge: "#1d1d1d", hidden: "#9a9a9a", plane: "#111111", planeEdge: "#000000", planeAlpha: 0.9, mark: "#c25a00", bad: "#b3261e",
-    hit: "#e2a400", inph: "#7fb8bd", atom: "#cfcfcf", dir: "#2747c4", muted: "#555555", line: "#d9d9d9", soft: "#f0f0f0" };
+    hit: "#e2a400", inph: "#7fb8bd", atom: "#cfcfcf", dir: "#2747c4", muted: "#555555", line: "#d9d9d9", soft: "#f0f0f0", ok: "#2b7a33" };
 
   /* ---------- drawing ---------- */
   function makeProjector(W, H, view, fit = 1.34) {
@@ -4580,7 +4710,7 @@ img { max-width: 100%; }
   });
   renderCitation();
 
-  const TABS = ["single", "guided", "set", "cell", "xrd", "index", "sxd"];
+  const TABS = ["single", "guided", "set", "cell", "xrd", "index", "sxd", "fc"];
   function showTab(name) {
     const tb = $("#tab-" + name), bar = tb.parentElement; // keep the active tab visible when the bar scrolls sideways on phones
     if (bar.scrollWidth > bar.clientWidth) bar.scrollLeft = Math.max(0, tb.offsetLeft - bar.offsetLeft - 24);
@@ -4591,9 +4721,11 @@ img { max-width: 100%; }
     $("#meta").textContent = name === "cell" ? "non-cubic cells · intercepts in units of each axis"
       : name === "xrd" ? "cubic cell · Bragg's law nλ = 2d sin θ"
       : name === "index" ? "sin²θ = (λ²/4a²)(h² + k² + l²)"
-      : name === "sxd" ? "Ewald sphere · reflection when |k₀ + G| = 1/λ" : "cubic cell · a = b = c · intercepts in units of a";
+      : name === "sxd" ? "Ewald sphere · reflection when |k₀ + G| = 1/λ"
+      : name === "fc" ? "Eulerian cradle · R = Ω(ω) Χ(χ) Φ(φ) U" : "cubic cell · a = b = c · intercepts in units of a";
     if (name !== "xrd") stopScan();
     if (name !== "sxd" && typeof stopSpin === "function") stopSpin();
+    if (name !== "fc" && typeof stopFcScan === "function") stopFcScan();
   }
   TABS.forEach((t) => $("#tab-" + t).addEventListener("click", () => showTab(t)));
 
@@ -4876,75 +5008,127 @@ img { max-width: 100%; }
     return quatToMat([a * Math.sin(u2), a * Math.cos(u2), b * Math.sin(u3), b * Math.cos(u3)]);
   }
 
+  /* Where a diffracted beam along kp meets the flat detector, in mm on the plate (y across, z up), or null if it misses.
+     The detector faces the crystal at distance D; on a 2θ arm it is swung by S.arm degrees about the vertical axis,
+     towards +y. Its across axis is then (−sin 2θ, cos 2θ, 0), which is +y when the arm is at zero. */
+  function detOf(S, kp) {
+    if (!S.arm) {
+      if (kp[0] <= 1e-6) return null;
+      const y = S.D * kp[1] / kp[0], z = S.D * kp[2] / kp[0];
+      return Math.abs(y) <= S.W && Math.abs(z) <= S.W ? [y, z] : null;
+    }
+    const t = S.arm * DEG, c = Math.cos(t), sn = Math.sin(t), den = kp[0] * c + kp[1] * sn;
+    if (den <= 1e-6) return null;
+    const f = S.D / den, y = f * (kp[1] * c - kp[0] * sn), z = f * kp[2];
+    return Math.abs(y) <= S.W && Math.abs(z) <= S.W ? [y, z] : null;
+  }
+  // The 2θ of a point (y, z) on the detector: the angle between the beam and the line from the crystal to that point.
+  function spot2t(S, y, z) {
+    if (!S.arm) return Math.atan(Math.hypot(y, z) / S.D) / DEG;
+    const t = S.arm * DEG, px = S.D * Math.cos(t) - y * Math.sin(t), py = S.D * Math.sin(t) + y * Math.cos(t);
+    return Math.atan2(Math.hypot(py, z), px) / DEG;
+  }
+
   // All reciprocal lattice points that can reach the detector, with their structure factors.
-  function sxdSetup() {
-    const k = 1 / SX.lam, thMax = 0.5 * Math.atan(Math.SQRT2 * SX.W / SX.D), gDet = 2 * Math.sin(thMax) / SX.lam;
-    const gShow = Math.min(2 * k, gDet * 1.15), hmax = Math.min(9, Math.floor(gShow * SX.a));
+  function sxdSetup(S = SX) {
+    // with the detector swung out on a 2θ arm, its far edge reaches |2θ arm| + the half-width seen from the crystal
+    const k = 1 / S.lam, thMax = 0.5 * Math.min(Math.PI, Math.abs(S.arm || 0) * DEG + Math.atan(Math.SQRT2 * S.W / S.D)), gDet = 2 * Math.sin(thMax) / S.lam;
+    const gShow = Math.min(2 * k, gDet * 1.15), hmax = Math.min(9, Math.floor(gShow * S.a));
     const out = []; let Imax = 0, I0max = 0;
     for (let h = -hmax; h <= hmax; h++) for (let kk = -hmax; kk <= hmax; kk++) for (let l = -hmax; l <= hmax; l++) {
       if (!h && !kk && !l) continue;
-      const hkl = [h, kk, l], gc = hkl.map((v) => v / SX.a), g = Math.hypot(...gc);
+      const hkl = [h, kk, l], gc = hkl.map((v) => v / S.a), g = Math.hypot(...gc);
       if (g > gShow) continue;
-      const F2 = xrdF2(SX.lat, hkl), absent = F2 <= F2_EPS, sinT = g * SX.lam / 2, tt = 2 * Math.asin(Math.min(1, sinT));
+      const F2 = xrdF2(S.lat, hkl), absent = F2 <= F2_EPS, sinT = g * S.lam / 2, tt = 2 * Math.asin(Math.min(1, sinT));
       const pol = (1 + Math.cos(tt) ** 2) / 2, fall = Math.exp(-2 * B_FALL * (g / 2) ** 2), I0 = absent ? 0 : F2 * pol * fall;
       out.push({ hkl, key: hkl.join(","), gc, g, d: 1 / g, tt: tt / DEG, s2t: Math.max(Math.sin(tt), 1e-3), F2, absent, I0 });
       if (g <= gDet) { I0max = Math.max(I0max, I0); Imax = Math.max(Imax, I0 / Math.sin(tt)); }
     }
-    SX.refl = out; SX.Imax = Imax || 1; SX.I0max = I0max || 1; SX.gShow = gShow; SX.acc = []; SX.accNote = null; SX.prevR = null;
+    S.refl = out; S.Imax = Imax || 1; S.I0max = I0max || 1; S.gShow = gShow; S.acc = []; S.accNote = null; S.prevR = null;
   }
   /* A collected spot is recorded at the exact moment its reciprocal lattice point crosses the Ewald sphere.
      The crossing is found from the rotation between two successive orientations (axis n): the point moves on a
      circle about n, and the crossing is where that circle meets the sphere, G·x̂ = −|G|²λ/2. Its integrated
      intensity carries the Lorentz factor 1/(λ |(n × G)·ŝ|), the time the point takes to pass through the sphere;
      for a point in the plane perpendicular to the axis this is the familiar 1/sin 2θ. */
-  function recordCrossing(r, G, n) {
-    const k = 1 / SX.lam, a = dot(G, n), P = G.map((x, i) => x - a * n[i]), rp = Math.hypot(...P);
+  function recordCrossing(S, r, G, n) {
+    const k = 1 / S.lam, a = dot(G, n), P = G.map((x, i) => x - a * n[i]), rp = Math.hypot(...P);
     if (rp < 1e-9) return;
     const u = P.map((x) => x / rp), v = cross(n, u), A = rp * u[0], B = rp * v[0], C = -(r.g * r.g) / (2 * k) - a * n[0], RR = Math.hypot(A, B);
     if (RR < 1e-12 || Math.abs(C) > RR) return;
     const base = Math.atan2(B, A), dd = Math.acos(C / RR), wrap = (f) => Math.atan2(Math.sin(f), Math.cos(f));
     const f1 = wrap(base + dd), f2 = wrap(base - dd), phi = Math.abs(f1) < Math.abs(f2) ? f1 : f2;
     const Gx = [0, 1, 2].map((i) => a * n[i] + rp * (Math.cos(phi) * u[i] + Math.sin(phi) * v[i])), kp = [Gx[0] + k, Gx[1], Gx[2]];
-    if (kp[0] <= 1e-6) return;
-    const y = SX.D * kp[1] / kp[0], z = SX.D * kp[2] / kp[0];
-    if (Math.abs(y) > SX.W || Math.abs(z) > SX.W) return;
-    const L = Math.min(60, 1 / (SX.lam * Math.abs(dot(cross(n, Gx), norm(kp))) || 1e-9)), I = (r.I0 * L) / SX.Imax;
+    const det = detOf(S, kp);
+    if (!det) return;
+    const [y, z] = det;
+    const L = Math.min(60, 1 / (S.lam * Math.abs(dot(cross(n, Gx), norm(kp))) || 1e-9)), I = (r.I0 * L) / S.Imax;
     // Reflections that land on the same point (within 0.3 mm) form one spot, as on film; the same reflection is not counted twice.
-    let grp = SX.acc.find((q) => Math.hypot(q.y - y, q.z - z) < 0.3);
-    if (!grp) { grp = { y, z, I: 0, refl: [] }; SX.acc.push(grp); }
+    let grp = S.acc.find((q) => Math.hypot(q.y - y, q.z - z) < 0.3);
+    if (!grp) { grp = { y, z, I: 0, refl: [] }; S.acc.push(grp); }
     if (!grp.refl.some((q) => q.key === r.key)) { grp.refl.push({ key: r.key, hkl: r.hkl }); grp.I += I; }
   }
-  function sxdCompute() {
-    const k = 1 / SX.lam, eta = SX.eta * DEG, live = [];
+  function sxdCompute(S = SX) {
+    const k = 1 / S.lam, eta = S.eta * DEG, live = [];
     // the rotation since the last update, as an axis: only small steps count as turning the crystal through the beam
     let axis = null;
-    if (SX.accumulate && SX.prevR) {
-      const dR = m3mul(SX.R, [0, 1, 2].map((i) => [0, 1, 2].map((j) => SX.prevR[j][i])));
+    if (S.accumulate && S.prevR) {
+      const dR = m3mul(S.R, [0, 1, 2].map((i) => [0, 1, 2].map((j) => S.prevR[j][i])));
       const ang = Math.acos(Math.max(-1, Math.min(1, (dR[0][0] + dR[1][1] + dR[2][2] - 1) / 2)));
       if (ang > 1e-9 && ang < 15 * DEG) axis = norm([dR[2][1] - dR[1][2], dR[0][2] - dR[2][0], dR[1][0] - dR[0][1]]);
     }
-    SX.prevR = SX.R.map((row) => row.slice());
-    for (const r of SX.refl) {
-      const G = m3vec(SX.R, r.gc), kp = [G[0] + k, G[1], G[2]], e = Math.hypot(...kp) - k;
-      if (axis && !r.absent && r.ePrev !== undefined && (e > 0) !== (r.ePrev > 0)) recordCrossing(r, G, axis);
+    S.prevR = S.R.map((row) => row.slice());
+    for (const r of S.refl) {
+      const G = m3vec(S.R, r.gc), kp = [G[0] + k, G[1], G[2]], e = Math.hypot(...kp) - k;
+      if (axis && !r.absent && r.ePrev !== undefined && (e > 0) !== (r.ePrev > 0)) recordCrossing(S, r, G, axis);
       r.ePrev = e;
       // mosaic spread: block orientations scattered by η (standard deviation) move G by about |G|η across the sphere, times cos θ
       const w = Math.exp(-0.5 * (e / Math.max(2e-4, r.g * Math.cos(r.tt * DEG / 2) * eta)) ** 2);
       r.G = G; r.w = w;
       if (w < 0.03) continue;
-      let det = null;
-      if (kp[0] > 1e-6) { const y = SX.D * kp[1] / kp[0], z = SX.D * kp[2] / kp[0]; if (Math.abs(y) <= SX.W && Math.abs(z) <= SX.W) det = [y, z]; }
-      live.push({ r, w, kp, det, I: Math.min(1, (w * r.I0 / r.s2t) / SX.Imax) });
+      const det = detOf(S, kp);
+      live.push({ r, w, kp, det, I: Math.min(1, (w * r.I0 / r.s2t) / S.Imax) });
     }
     live.sort((p, q) => q.I - p.I || q.w - p.w);
-    SX.live = live;
-    if (!SX.pinned) { const best = live.find((L) => !L.r.absent && L.det); if (best) SX.sel = best.r.key; }
+    S.live = live;
+    if (!S.pinned) { const best = live.find((L) => !L.r.absent && L.det); if (best) S.sel = best.r.key; }
   }
-  const selRefl = () => SX.refl.find((r) => r.key === SX.sel) || null;
+  const selRefl = (S = SX) => S.refl.find((r) => r.key === S.sel) || null;
   const hklLabel = (t) => t.map(sgn).join(" ");
 
   // Fixed camera for the setup and the Ewald views: from the front, slightly left and above.
   const SXCAM = (() => { const v = norm([-0.3, -1, 0.45]), f = v.map((x) => -x), right = norm(cross(f, [0, 0, 1])), up = cross(right, f); return { v, right, up }; })();
+
+  /* The crystal of a single-crystal view: unit cell, the planes of the selected reflection, the atoms coloured by phase,
+     and the crystal axes a, b, c. P projects lab coordinates to the canvas, s is the drawing scale, cs the cell size,
+     R the crystal orientation and v the direction towards the viewer. */
+  function drawCrystal(ctx, { P, s, cs, R, v, sel, lat, pal, k }) {
+    const line = (a, b) => { const A = P(a), B = P(b); ctx.beginPath(); ctx.moveTo(A[0], A[1]); ctx.lineTo(B[0], B[1]); ctx.stroke(); };
+    const poly = (pts) => { ctx.beginPath(); pts.forEach((p, i) => { const q = P(p); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); }); ctx.closePath(); };
+    const font = (sz, w = 600) => `${w} ${sz * k}px ${SANS}`;
+    const Rm = R, toLab = (pc) => m3vec(Rm, pc.map((x) => (x - 0.5) * cs));
+    const faces = [[0, 0], [0, 1], [1, 0], [1, 1], [2, 0], [2, 1]];
+    const vis = (axis, val) => { const n = [0, 0, 0]; n[axis] = val ? 1 : -1; return dot(m3vec(Rm, n), v) > 1e-6; };
+    ctx.setLineDash([3 * k, 3 * k]); ctx.strokeStyle = pal.hidden; ctx.lineWidth = 1 * k;
+    for (const e of EDGES) if (!vis(...e.faces[0]) && !vis(...e.faces[1])) line(toLab(e.p), toLab(e.q));
+    ctx.setLineDash([]);
+    if (sel) {
+      const fam = familyConsts(sel.hkl).map((m) => sectionPolygon(sel.hkl, m)).filter((pl) => pl.length >= 3);
+      const fa = Math.min(1, 4 / fam.length);
+      fam.forEach((pl) => { poly(pl.map(toLab)); ctx.globalAlpha = 0.24 * fa; ctx.fillStyle = pal.plane; ctx.fill(); ctx.globalAlpha = 0.25 + 0.4 * fa; ctx.strokeStyle = pal.planeEdge; ctx.lineWidth = 1 * k; ctx.stroke(); ctx.globalAlpha = 1; });
+    }
+    const atoms = cellAtoms(lat).map((a) => { const ph = sel ? phaseClass(dot(sel.hkl, a.r)) : 1; return { ...a, cat: !sel ? "other" : ph === 0 ? "hit" : ph === 0.5 ? "anti" : "other", z: dot(toLab(a.r), v) }; }).sort((p, q) => p.z - q.z);
+    drawAtomList(ctx, atoms.map((a) => ({ ...a, r: a.r })), (pc) => P(toLab(pc)), (sp) => s * cs * atomRadius(lat, sp) * 0.85, pal, k);
+    ctx.strokeStyle = pal.edge; ctx.lineWidth = 1.3 * k;
+    for (const e of EDGES) if (vis(...e.faces[0]) || vis(...e.faces[1])) line(toLab(e.p), toLab(e.q));
+    // crystal axes, so students can see how it is turned
+    [["a", 0], ["b", 1], ["c", 2]].forEach(([name, i]) => {
+      const o = [0, 0, 0].map((x) => x), t = [0, 0, 0]; t[i] = 1.32;
+      const A = P(toLab(o)), B = P(toLab(t)); ctx.strokeStyle = pal.ink; ctx.fillStyle = pal.ink; ctx.lineWidth = 1.4 * k;
+      ctx.beginPath(); ctx.moveTo(A[0], A[1]); ctx.lineTo(B[0], B[1]); ctx.stroke(); arrow(ctx, A, B, 7 * k);
+      const T = P(toLab(t.map((x) => x * 1.1))); ctx.font = font(13, 600); ctx.font = `italic ${ctx.font}`; haloText(ctx, name, T[0], T[1], pal.ink, pal.bg, k);
+    });
+  }
 
   /* ----- the diffractometer: source, crystal, detector ----- */
   function drawSetup(ctx, W, H, pal) {
@@ -4993,29 +5177,7 @@ img { max-width: 100%; }
       ctx.beginPath(); ctx.arc(q[0], q[1], rad, 0, Math.PI * 2); ctx.fillStyle = pal.hit; ctx.fill();
       if (L.r.key === SX.sel) { ctx.strokeStyle = pal.mark; ctx.lineWidth = 2 * k; ctx.beginPath(); ctx.arc(q[0], q[1], rad + 3 * k, 0, Math.PI * 2); ctx.stroke(); }
     }
-    // the crystal: cube, the planes of the selected reflection, and the atoms
-    const cs = 1.1, Rm = SX.R, toLab = (pc) => m3vec(Rm, pc.map((x) => (x - 0.5) * cs));
-    const faces = [[0, 0], [0, 1], [1, 0], [1, 1], [2, 0], [2, 1]];
-    const vis = (axis, val) => { const n = [0, 0, 0]; n[axis] = val ? 1 : -1; return dot(m3vec(Rm, n), v) > 1e-6; };
-    ctx.setLineDash([3 * k, 3 * k]); ctx.strokeStyle = pal.hidden; ctx.lineWidth = 1 * k;
-    for (const e of EDGES) if (!vis(...e.faces[0]) && !vis(...e.faces[1])) line(toLab(e.p), toLab(e.q));
-    ctx.setLineDash([]);
-    if (sel) {
-      const fam = familyConsts(sel.hkl).map((m) => sectionPolygon(sel.hkl, m)).filter((pl) => pl.length >= 3);
-      const fa = Math.min(1, 4 / fam.length);
-      fam.forEach((pl) => { poly(pl.map(toLab)); ctx.globalAlpha = 0.24 * fa; ctx.fillStyle = pal.plane; ctx.fill(); ctx.globalAlpha = 0.25 + 0.4 * fa; ctx.strokeStyle = pal.planeEdge; ctx.lineWidth = 1 * k; ctx.stroke(); ctx.globalAlpha = 1; });
-    }
-    const atoms = cellAtoms(SX.lat).map((a) => { const ph = sel ? phaseClass(dot(sel.hkl, a.r)) : 1; return { ...a, cat: !sel ? "other" : ph === 0 ? "hit" : ph === 0.5 ? "anti" : "other", z: dot(toLab(a.r), v) }; }).sort((p, q) => p.z - q.z);
-    drawAtomList(ctx, atoms.map((a) => ({ ...a, r: a.r })), (pc) => P(toLab(pc)), (sp) => s * cs * atomRadius(SX.lat, sp) * 0.85, pal, k);
-    ctx.strokeStyle = pal.edge; ctx.lineWidth = 1.3 * k;
-    for (const e of EDGES) if (vis(...e.faces[0]) || vis(...e.faces[1])) line(toLab(e.p), toLab(e.q));
-    // crystal axes, so students can see how it is turned
-    [["a", 0], ["b", 1], ["c", 2]].forEach(([name, i]) => {
-      const o = [0, 0, 0].map((x) => x), t = [0, 0, 0]; t[i] = 1.32;
-      const A = P(toLab(o)), B = P(toLab(t)); ctx.strokeStyle = pal.ink; ctx.fillStyle = pal.ink; ctx.lineWidth = 1.4 * k;
-      ctx.beginPath(); ctx.moveTo(A[0], A[1]); ctx.lineTo(B[0], B[1]); ctx.stroke(); arrow(ctx, A, B, 7 * k);
-      const T = P(toLab(t.map((x) => x * 1.1))); ctx.font = font(13, 600); ctx.font = `italic ${ctx.font}`; haloText(ctx, name, T[0], T[1], pal.ink, pal.bg, k);
-    });
+    drawCrystal(ctx, { P, s, cs: 1.1, R: SX.R, v, sel, lat: SX.lat, pal, k });
     ctx.textAlign = "left"; ctx.font = font(11, 500); ctx.fillStyle = pal.muted;
     ctx.fillText("Not to scale: the crystal is drawn enlarged.", 12, H - 14);
     if (sel) {
@@ -5070,9 +5232,9 @@ img { max-width: 100%; }
   }
 
   /* ----- Ewald construction ----- */
-  function drawEwald(ctx, W, H, pal) {
+  function drawEwaldFor(S, cam, ctx, W, H, pal) {
     ctx.fillStyle = pal.bg; ctx.fillRect(0, 0, W, H);
-    const { v, right, up } = SXCAM, k = 1 / SX.lam, C = [-k, 0, 0], g = SX.gShow;
+    const { v, right, up } = cam, k = 1 / S.lam, C = [-k, 0, 0], g = S.gShow;
     const pr = (p) => [dot(p, right), dot(p, up)];
     const pc = pr(C), ext = [[pc[0] - k, pc[1] - k], [pc[0] + k, pc[1] + k]];
     ext.push([-g, -g], [g, g]);
@@ -5092,14 +5254,14 @@ img { max-width: 100%; }
       ctx.strokeStyle = pal.dir; ctx.globalAlpha = 0.35; ctx.lineWidth = 1; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
     }
     // reciprocal lattice: allowed points sized by intensity; absent points only when they sit on the sphere
-    const layerOK = (h) => SX.layer === "all" || (SX.layer === "l0" && h[2] === 0) || (SX.layer === "k0" && h[1] === 0) || (SX.layer === "h0" && h[0] === 0);
-    const pts = SX.refl.filter((r) => layerOK(r.hkl) && (!r.absent || r.w > 0.3)).map((r) => ({ r, q: P(r.G), z: dot(r.G, v) }));
+    const layerOK = (h) => S.layer === "all" || (S.layer === "l0" && h[2] === 0) || (S.layer === "k0" && h[1] === 0) || (S.layer === "h0" && h[0] === 0);
+    const pts = S.refl.filter((r) => layerOK(r.hkl) && (!r.absent || r.w > 0.3)).map((r) => ({ r, q: P(r.G), z: dot(r.G, v) }));
     pts.sort((p, q) => p.z - q.z);
     const zmin = Math.min(...pts.map((p) => p.z), 0), zmax = Math.max(...pts.map((p) => p.z), 0.01);
     for (const p of pts) {
       const on = p.r.w > 0.3, depthA = 0.25 + 0.6 * (p.z - zmin) / (zmax - zmin || 1);
       if (p.r.absent) { ctx.beginPath(); ctx.arc(p.q[0], p.q[1], 5, 0, Math.PI * 2); ctx.strokeStyle = pal.bad; ctx.lineWidth = 1.6; ctx.stroke(); continue; }
-      const rad = 1.3 + 3.2 * Math.sqrt(p.r.I0 / SX.I0max);
+      const rad = 1.3 + 3.2 * Math.sqrt(p.r.I0 / S.I0max);
       if (on) {
         ctx.beginPath(); ctx.arc(p.q[0], p.q[1], rad + 5, 0, Math.PI * 2); ctx.fillStyle = pal.hit; ctx.globalAlpha = 0.3 * p.r.w; ctx.fill(); ctx.globalAlpha = 1;
         ctx.beginPath(); ctx.arc(p.q[0], p.q[1], rad + 1.5, 0, Math.PI * 2); ctx.fillStyle = pal.hit; ctx.fill();
@@ -5111,12 +5273,12 @@ img { max-width: 100%; }
     const O = P([0, 0, 0]);
     ctx.strokeStyle = pal.dir; ctx.fillStyle = pal.dir; ctx.lineWidth = 2.4;
     ctx.beginPath(); ctx.moveTo(Cp[0], Cp[1]); ctx.lineTo(O[0], O[1]); ctx.stroke(); arrow(ctx, Cp, O, 10);
-    const live = SX.live.filter((L) => !L.r.absent && L.w > 0.3 && layerOK(L.r.hkl)).slice(0, 12);
+    const live = S.live.filter((L) => !L.r.absent && L.w > 0.3 && layerOK(L.r.hkl)).slice(0, 12);
     for (const L of live) {
-      const T = P(L.r.G); ctx.strokeStyle = pal.hit; ctx.fillStyle = pal.hit; ctx.lineWidth = L.r.key === SX.sel ? 2.6 : 1.4; ctx.globalAlpha = 0.85;
+      const T = P(L.r.G); ctx.strokeStyle = pal.hit; ctx.fillStyle = pal.hit; ctx.lineWidth = L.r.key === S.sel ? 2.6 : 1.4; ctx.globalAlpha = 0.85;
       ctx.beginPath(); ctx.moveTo(Cp[0], Cp[1]); ctx.lineTo(T[0], T[1]); ctx.stroke(); arrow(ctx, Cp, T, 8); ctx.globalAlpha = 1;
     }
-    const sel = selRefl();
+    const sel = selRefl(S);
     if (sel && sel.G) {
       const T = P(sel.G); ctx.strokeStyle = pal.mark; ctx.fillStyle = pal.mark; ctx.lineWidth = 2.4;
       ctx.beginPath(); ctx.moveTo(O[0], O[1]); ctx.lineTo(T[0], T[1]); ctx.stroke(); arrow(ctx, O, T, 9);
@@ -5124,7 +5286,7 @@ img { max-width: 100%; }
       haloText(ctx, `G = ${fmt(sel.hkl)}`, T[0] + 9, T[1] - 10, pal.mark, pal.bg, 1);
     }
     ctx.font = `500 11px ${MONO}`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    live.slice(0, W < 480 ? 0 : 6).forEach((L) => { if (L.r.key === SX.sel) return; const T = P(L.r.G); haloText(ctx, hklLabel(L.r.hkl), T[0], T[1] - 12, pal.ink, pal.bg, 1); });
+    live.slice(0, W < 480 ? 0 : 6).forEach((L) => { if (L.r.key === S.sel) return; const T = P(L.r.G); haloText(ctx, hklLabel(L.r.hkl), T[0], T[1] - 12, pal.ink, pal.bg, 1); });
     ctx.font = font(13); ctx.fillStyle = pal.ink;
     haloText(ctx, "O", O[0] + 12, O[1] + 12, pal.ink, pal.bg, 1);
     ctx.beginPath(); ctx.arc(Cp[0], Cp[1], 3.5, 0, Math.PI * 2); ctx.fillStyle = pal.dir; ctx.fill();
@@ -5132,36 +5294,39 @@ img { max-width: 100%; }
     ctx.font = font(12, 500); haloText(ctx, "k₀ = 1/λ", (Cp[0] + O[0]) / 2, (Cp[1] + O[1]) / 2 - 12, pal.dir, pal.bg, 1);
     const top = P([C[0], 0, k]); haloText(ctx, "Ewald sphere, radius 1/λ", top[0], top[1] - 12, pal.dir, pal.bg, 1);
   }
+  const drawEwald = (ctx, W, H, pal) => drawEwaldFor(SX, SXCAM, ctx, W, H, pal);
 
   /* ----- status and interaction ----- */
   const sxPanel = new CanvasPanel($("#cv-sxd"), drawSetup);
   const detPanel = new CanvasPanel($("#cv-det"), drawDetectorImg);
   const ewPanel = new CanvasPanel($("#cv-ewald"), drawEwald);
-  function sxdStatus() {
-    const live = SX.live, onDet = live.filter((L) => !L.r.absent && L.det), sel = selRefl();
-    $("#sHead").className = `status ${onDet.length ? "ok" : "neutral"}`;
-    $("#sHead").innerHTML = `<b>${onDet.length ? `${onDet.length} spot${onDet.length > 1 ? "s" : ""} on the detector` : "No spot on the detector at this orientation"}</b>`;
-    $("#sList").innerHTML = live.slice(0, 30).map((L) => `<tr class="${L.r.absent ? "absent" : ""} ${L.r.key === SX.sel ? "on" : ""}">
+  function sxStatusFor(S, ids) {
+    const live = S.live, onDet = live.filter((L) => !L.r.absent && L.det), sel = selRefl(S);
+    $(ids.head).className = `status ${onDet.length ? "ok" : "neutral"}`;
+    $(ids.head).innerHTML = `<b>${onDet.length ? `${onDet.length} spot${onDet.length > 1 ? "s" : ""} on the detector` : "No spot on the detector at this orientation"}</b>`;
+    $(ids.list).innerHTML = live.slice(0, 30).map((L) => `<tr class="${L.r.absent ? "absent" : ""} ${L.r.key === S.sel ? "on" : ""}">
       <td><button class="rowbtn" data-key="${L.r.key}">${fmt(L.r.hkl)}</button></td><td>${L.r.d.toFixed(3)}</td><td>${L.r.tt.toFixed(2)}</td>
       <td>${L.r.absent ? "absent" : (L.I * 100).toFixed(L.I < 0.1 ? 1 : 0)}</td><td>${L.r.absent ? "no spot" : L.det ? "seen" : "missed"}</td></tr>`).join("")
       || `<tr><td colspan="5" class="fine">None. Rotate the crystal until a reciprocal lattice point touches the Ewald sphere.</td></tr>`;
     let why;
     if (!sel) why = "Rotate the crystal: a spot appears whenever a reciprocal lattice point crosses the Ewald sphere.";
     else {
-      const sinT = SX.lam / (2 * sel.d), on = sel.w > 0.3, Lsel = live.find((L) => L.r.key === sel.key);
+      const sinT = S.lam / (2 * sel.d), on = sel.w > 0.3, Lsel = live.find((L) => L.r.key === sel.key);
       why = `<b>${fmt(sel.hkl)}</b>: d = ${sel.d.toFixed(4)} Å, so its point sits ${(1 / sel.d).toFixed(4)} Å⁻¹ from O. Bragg's law gives θ = ${(Math.asin(Math.min(1, sinT)) / DEG).toFixed(2)}°, 2θ = ${sel.tt.toFixed(2)}°. `;
       if (sel.absent) why += on ? "Its point is on the sphere, but the atoms between the planes cancel the reflection (F = 0): it is systematically absent, so there is no spot." : "It is systematically absent (F = 0) for this structure, so it never gives a spot.";
-      else if (on) why += Lsel && Lsel.det ? "Its point is on the Ewald sphere, so the planes are at the Bragg angle to the beam and a spot appears on the detector." : "Its point is on the sphere, but the diffracted beam misses the detector. Move the detector closer to catch it.";
+      else if (on) why += Lsel && Lsel.det ? "Its point is on the Ewald sphere, so the planes are at the Bragg angle to the beam and a spot appears on the detector." : `Its point is on the sphere, but the diffracted beam misses the detector. ${ids.miss}`;
       else why += "Its point is not on the sphere at the moment, so these planes are not at the Bragg angle. Rotate the crystal to bring them into position.";
-      const g = SX.accNote;
+      const g = S.accNote;
       if (g && g.refl.some((q) => q.key === sel.key)) {
-        const tt = Math.atan(Math.hypot(g.y, g.z) / SX.D) / DEG, names = g.refl.map((q) => fmt(q.hkl));
+        const tt = spot2t(S, g.y, g.z), names = g.refl.map((q) => fmt(q.hkl));
         why = `<b>Collected spot</b> at 2θ = ${tt.toFixed(2)}°, ${Math.hypot(g.y, g.z).toFixed(1)} mm from the centre: ${names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}. ${g.refl.every((q) => q.hkl.map(Math.abs).sort().join() === g.refl[0].hkl.map(Math.abs).sort().join()) ? "These planes are symmetry-equivalent. They" : "These planes"} have the same d and the same height above the rotation axis, so during the rotation they reach the sphere at different moments but send their beams to the same point.` : `${names[0]}.`} ` + why;
       }
-      if (SX.pinned) why += ' <button class="link" id="sUnpin">Follow the strongest spot again</button>';
+      if (S.pinned) why += ` <button class="link" id="${ids.unpin}">Follow the strongest spot again</button>`;
     }
-    $("#sWhy").innerHTML = why;
+    $(ids.why).innerHTML = why;
   }
+  const SX_IDS = { head: "#sHead", list: "#sList", why: "#sWhy", unpin: "sUnpin", miss: "Move the detector closer to catch it." };
+  const sxdStatus = () => sxStatusFor(SX, SX_IDS);
   function sxdRender() { sxdCompute(); sxdStatus(); sxPanel.draw(); detPanel.draw(); ewPanel.draw(); }
   function sxdChanged() {
     const a = parseFloat($("#sA").value);
@@ -5239,7 +5404,379 @@ img { max-width: 100%; }
   })();
 
   /* ---------- guided tour: an optional walk through the app, as a whole or one tab at a time ---------- */
-  const TAB_NAMES = { single: "Single plane", guided: "Step by step", set: "Matching set", cell: "Non-cubic cells", xrd: "X-ray diffraction", index: "Peaks to planes", sxd: "Single crystal" };
+  /* =================== Four-circle diffractometer =================== */
+  // Same lab frame as the single-crystal tab: x along the beam, z vertical. The crystal sits on an Eulerian cradle
+  // (Busing & Levy convention): ω turns the cradle about z; χ turns the φ axis about the horizontal axis that lies along
+  // the beam when ω = 0; φ turns the crystal about its mounting pin, which is vertical when χ = 0. The orientation is
+  // R = Ω(ω)·Χ(χ)·Φ(φ)·U, where U is how the crystal is mounted on the pin. The detector rides on a 2θ arm about z.
+  const FC = { lat: "nacl", a: 5.6402, lam: 0.7093, eta: 0.4, D: 60, W: 50, arm: 20, om: 0, chi: 0, phi: 0, mode: "free",
+    U: [[1, 0, 0], [0, 1, 0], [0, 0, 1]], R: [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+    acc: [], prevR: null, accNote: null, accumulate: false, scan: null, sel: null, pinned: false, layer: "all", refl: [], live: [], Imax: 1, gShow: 1 };
+  const FC_IDS = { head: "#fHead", list: "#fList", why: "#fWhy", unpin: "fUnpin", miss: "Swing the 2θ arm towards it, or move the detector closer." };
+  const FC_CIRCLES = ["om", "chi", "phi"];
+  const transpose = (A) => [0, 1, 2].map((i) => [0, 1, 2].map((j) => A[j][i]));
+  const sdeg = (x, d = 1) => { const t = Math.abs(x).toFixed(d); return `${x < 0 && +t !== 0 ? "−" : ""}${t}°`; }; // with a true minus sign
+  const wrap180 = (x) => { const y = (((x + 180) % 360) + 360) % 360 - 180; return y === -180 ? 180 : y; };
+  const gonioMat = (om, chi, phi) => m3mul(rotAxis([0, 0, 1], om * DEG), m3mul(rotAxis([1, 0, 0], chi * DEG), rotAxis([0, 0, 1], phi * DEG)));
+  // The χ and φ axes in the lab, as the circles stand now (the ω axis is always vertical).
+  function fcAxes() {
+    const chiAx = [Math.cos(FC.om * DEG), Math.sin(FC.om * DEG), 0];
+    const phiAx = m3vec(m3mul(rotAxis([0, 0, 1], FC.om * DEG), rotAxis([1, 0, 0], FC.chi * DEG)), [0, 0, 1]);
+    return { chiAx, phiAx };
+  }
+  const fcSetR = () => { FC.R = orthonormal(m3mul(gonioMat(FC.om, FC.chi, FC.phi), FC.U)); };
+  // Free rotation turns the crystal itself while the circles stay put, so the mounting U takes up the turn.
+  function fcRotateFree(axis, ang) {
+    FC.R = orthonormal(m3mul(rotAxis(axis, ang), FC.R));
+    FC.U = orthonormal(m3mul(transpose(gonioMat(FC.om, FC.chi, FC.phi)), FC.R));
+  }
+  function fcSetAngle(ax, val, render = true) {
+    if (ax === "arm") { FC.arm = Math.max(-150, Math.min(150, Math.round(val * 10) / 10)); sxdSetup(FC); } // a new detector position starts a new image
+    else { FC[ax] = wrap180(val); fcSetR(); }
+    if (render) fcRender();
+  }
+
+  // Detector angles covered by the plate at its current position.
+  function fcCoverage() {
+    let lo = detOf(FC, [1, 0, 0]) ? 0 : 180, hi = 0;
+    for (let i = 0; i <= 40; i++) {
+      const u = (-1 + i / 20) * FC.W;
+      for (const [y, z] of [[u, -FC.W], [u, FC.W], [-FC.W, u], [FC.W, u]]) { const t = spot2t(FC, y, z); lo = Math.min(lo, t); hi = Math.max(hi, t); }
+    }
+    return [lo, hi];
+  }
+
+  /* ----- bisecting position: χ and φ bring the plane normal into the horizontal plane, ω = θ makes it bisect
+     the incident and diffracted beams, and the detector goes to 2θ. ----- */
+  function fcBring() {
+    const hkl = ["#fh", "#fk", "#fl"].map((id) => Math.round(+$(id).value)), msg = $("#fBringMsg");
+    if (hkl.some((x) => !Number.isFinite(x) || Math.abs(x) > 9) || !hkl.some((x) => x)) { msg.textContent = "Type three whole numbers from −9 to 9, not all zero."; return; }
+    const gc = hkl.map((x) => x / FC.a), g = Math.hypot(...gc), sinT = (g * FC.lam) / 2;
+    if (sinT >= 1) {
+      msg.innerHTML = `<b>${fmt(hkl)}</b> cannot diffract at this wavelength: d = ${(1 / g).toFixed(4)} Å is shorter than λ/2 = ${(FC.lam / 2).toFixed(4)} Å, so its point is further than 2/λ from O and no turn of the crystal brings it onto the Ewald sphere.`;
+      return;
+    }
+    const th = Math.asin(sinT) / DEG, hU = norm(m3vec(FC.U, gc)), rho = Math.hypot(hU[0], hU[1]);
+    stopFcScan(); setFcMode("gonio");
+    FC.om = wrap180(th); FC.chi = wrap180(Math.atan2(-hU[2], rho) / DEG); FC.phi = rho < 1e-9 ? 0 : wrap180(90 - Math.atan2(hU[1], hU[0]) / DEG);
+    const reach = 2 * th <= 150;
+    FC.arm = Math.min(150, 2 * th);
+    fcSetR(); sxdSetup(FC);
+    FC.sel = hkl.join(","); FC.pinned = true; FC.accNote = null;
+    const r = FC.refl.find((q) => q.key === FC.sel);
+    msg.innerHTML = `<b>${fmt(hkl)}</b>: d = ${(1 / g).toFixed(4)} Å and θ = ${th.toFixed(2)}°. In the bisecting position ω = θ = ${sdeg(FC.om, 2)}, χ = ${sdeg(FC.chi, 2)} and φ = ${sdeg(FC.phi, 2)}: χ and φ turn the plane normal into the horizontal plane, and ω turns it to bisect the incident and diffracted beams. `
+      + (reach ? `The detector arm goes to 2θ = ${(2 * th).toFixed(2)}°, so the spot lands in the middle of the detector.` : `The diffracted beam leaves at 2θ = ${(2 * th).toFixed(2)}°, beyond the 150° the arm can reach.`)
+      + (r && r.absent ? ` But ${fmt(hkl)} is systematically absent for this structure: Bragg's law holds, yet the atoms between the planes cancel the reflection and no spot appears.` : "");
+    fcRender();
+  }
+
+  /* ----- scans: one circle turns at 8° per second ----- */
+  function fcScanStep(now) {
+    if (!FC.scan) return;
+    const dt = Math.min(0.05, (now - FC.scan.last) / 1000); FC.scan.last = now;
+    fcSetAngle(FC.scan.ax, FC[FC.scan.ax] + 8 * dt);
+    requestAnimationFrame(fcScanStep);
+  }
+  function stopFcScan() { if (!FC.scan) return; FC.scan = null; fcSyncControls(); }
+  function startFcScan(ax) {
+    if (FC.scan && FC.scan.ax === ax) { stopFcScan(); return; }
+    FC.scan = { ax, last: performance.now() }; fcSyncControls(); requestAnimationFrame(fcScanStep);
+  }
+  function setFcMode(m) {
+    FC.mode = m; document.querySelector(`input[name="fMode"][value="${m}"]`).checked = true;
+    if (m === "free") stopFcScan();
+    fcSyncControls();
+  }
+  function fcSyncControls(nudge = false) {
+    const gon = FC.mode === "gonio";
+    document.querySelectorAll("#fGonioCard .gon-row").forEach((row) => {
+      const ax = row.dataset.ax, off = ax !== "arm" && !gon;
+      row.querySelector("input").value = FC[ax].toFixed(1);
+      row.querySelector("output").textContent = sdeg(FC[ax]);
+      row.classList.toggle("off", off);
+      row.querySelectorAll("input, button").forEach((el) => { el.disabled = off; });
+      const sb = row.querySelector("[data-scan]"); if (sb) sb.textContent = FC.scan && FC.scan.ax === ax ? "Stop" : "Scan";
+    });
+    $("#fStop").hidden = !FC.scan;
+    $("#fStop").textContent = FC.scan ? `Stop the ${{ om: "ω", chi: "χ", phi: "φ" }[FC.scan.ax]} scan` : "Stop scan";
+    ["#cv-fc", "#cv-fcew"].forEach((id) => $(id).classList.toggle("locked", gon));
+    $("#fHint").innerHTML = gon
+      ? `${nudge ? "<b>The crystal is on the goniometer.</b> " : ""}Four-circle mode: the crystal turns only about ω, χ and φ. Use the goniometer controls, or the arrow keys (← → for ω, ↑ ↓ for χ).`
+      : "Free rotation: drag anywhere in the picture to turn the crystal in any direction. A real diffractometer can only turn it about ω, χ and φ: choose Four-circle to see how.";
+  }
+
+  /* ----- the instrument: source, Eulerian cradle, crystal, 2θ arm and detector ----- */
+  // From the front and above, so the cradle ring and the swung detector both stay in view.
+  const FCCAM = (() => { const v = norm([-0.42, -1, 0.62]), f = v.map((x) => -x), right = norm(cross(f, [0, 0, 1])), up = cross(right, f); return { v, right, up }; })();
+  function drawFcSetup(ctx, W, H, pal) {
+    ctx.fillStyle = pal.bg; ctx.fillRect(0, 0, W, H);
+    const { v, right, up } = FCCAM, s = Math.min(W / 8.4, H / 5.2), cx = W * 0.5 - s * 0.2, cy = H * 0.47;
+    const P = (p) => [cx + s * dot(p, right), cy - s * dot(p, up)];
+    const k = Math.max(0.8, Math.min(1.5, s / 125));
+    const line = (a, b) => { const A = P(a), B = P(b); ctx.beginPath(); ctx.moveTo(A[0], A[1]); ctx.lineTo(B[0], B[1]); ctx.stroke(); };
+    const path = (pts) => { ctx.beginPath(); pts.forEach((p, i) => { const q = P(p); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); }); };
+    const poly = (pts) => { path(pts); ctx.closePath(); };
+    const font = (sz, w = 600) => `${w} ${sz * k}px ${SANS}`;
+    const add = (...vs) => [0, 1, 2].map((i) => vs.reduce((t, q) => t + q[i], 0)), mul = (q, f) => q.map((x) => x * f);
+    ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    const sel = selRefl(FC), om = FC.om * DEG, Rc = 1.35, zb = -1.95, sx = -3.3, Z = [0, 0, 1];
+    const AX = { om: pal.plane, chi: pal.ok, phi: pal.mark };
+    const { chiAx, phiAx } = fcAxes(), yp = cross(Z, chiAx); // yp: horizontal, in the plane of the χ ring
+    const ringPt = (t, r = Rc) => add(mul(yp, r * Math.cos(t)), mul(Z, r * Math.sin(t)));
+    const t2 = FC.arm * DEG, nd = [Math.cos(t2), Math.sin(t2), 0], eh = [-Math.sin(t2), Math.cos(t2), 0];
+    const Ld = 2.35 + ((FC.D - 40) / 80) * 1.0, hs = 0.85;
+    const onPlate = (y, z) => add(mul(nd, Ld), mul(eh, (y / FC.W) * hs), mul(Z, (z / FC.W) * hs));
+    // an arc of radius r about centre in the plane of unit vectors n1, n2, from angle a1 to a2, ending in an arrow
+    const arc = (centre, n1, n2, r, a1, a2, col, head = true) => {
+      const pts = []; for (let i = 0; i <= 28; i++) { const a = a1 + ((a2 - a1) * i) / 28; pts.push(add(centre, mul(n1, r * Math.cos(a)), mul(n2, r * Math.sin(a)))); }
+      ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 2 * k; path(pts); ctx.stroke();
+      if (head) arrow(ctx, P(pts[pts.length - 3]), P(pts[pts.length - 1]), 8 * k);
+      return pts;
+    };
+    const label = (txt, p, col, sz = 15, it = true) => { ctx.font = `${it ? "italic " : ""}${font(sz, 700)}`; const L = P(p); haloText(ctx, txt, L[0], L[1], col, pal.bg, k); };
+
+    // ω: the turntable under the cradle, with ticks that turn with it
+    const table = []; for (let i = 0; i <= 72; i++) { const a = (i / 72) * 2 * Math.PI; table.push([1.05 * Math.cos(a), 1.05 * Math.sin(a), zb]); }
+    path(table); ctx.fillStyle = pal.soft; ctx.fill(); ctx.strokeStyle = AX.om; ctx.lineWidth = 2.2 * k; ctx.stroke();
+    ctx.lineWidth = 1.4 * k;
+    for (let i = 0; i < 12; i++) { const a = om + (i * Math.PI) / 6; line([0.86 * Math.cos(a), 0.86 * Math.sin(a), zb], [1.05 * Math.cos(a), 1.05 * Math.sin(a), zb]); }
+    // 2θ: zero line along the beam, the angle, and the arm carrying the detector
+    ctx.strokeStyle = pal.hidden; ctx.lineWidth = 1.2 * k; ctx.setLineDash([4 * k, 4 * k]); line([0, 0, zb], [Ld + 0.4, 0, zb]); ctx.setLineDash([]);
+    if (Math.abs(FC.arm) > 1) arc([0, 0, zb], [1, 0, 0], [0, 1, 0], 1.6, 0, t2, pal.edge);
+    label(`2θ = ${sdeg(FC.arm)}`, [1.95 * Math.cos(t2 / 2), 1.95 * Math.sin(t2 / 2), zb - 0.12], pal.ink, 12, false);
+    const foot = [Ld * nd[0], Ld * nd[1], zb];
+    ctx.strokeStyle = pal.edge; ctx.lineWidth = 5 * k; line([0, 0, zb], foot); ctx.lineWidth = 3 * k; line(foot, [foot[0], foot[1], -hs]);
+    // detector plate, square to the arm
+    poly([[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([a, b]) => add(mul(nd, Ld), mul(eh, a * hs), mul(Z, b * hs))));
+    ctx.fillStyle = pal.soft; ctx.fill(); ctx.strokeStyle = pal.edge; ctx.lineWidth = 1.4 * k; ctx.stroke();
+    label("detector", add(mul(nd, Ld), mul(Z, hs + 0.3)), pal.ink, 12, false);
+    // source, incident beam, straight-through beam and beam stop
+    poly([[sx - 0.25, -0.28, -0.28], [sx - 0.25, 0.28, -0.28], [sx - 0.25, 0.28, 0.28], [sx - 0.25, -0.28, 0.28]]);
+    ctx.fillStyle = pal.soft; ctx.fill(); ctx.strokeStyle = pal.edge; ctx.lineWidth = 1.2 * k; ctx.stroke();
+    label("X-ray source", [sx - 0.1, 0, 0.66], pal.ink, 12, false);
+    ctx.font = font(11, 500); const SL = P([sx - 0.1, 0, 0.66]); ctx.fillStyle = pal.muted; ctx.fillText(`λ = ${FC.lam} Å`, SL[0], SL[1] + 15 * k);
+    ctx.strokeStyle = pal.dir; ctx.lineWidth = 4 * k; line([sx + 0.05, 0, 0], [0, 0, 0]);
+    ctx.fillStyle = pal.dir; arrow(ctx, P([sx + 0.05, 0, 0]), P([-1.1, 0, 0]), 11 * k);
+    ctx.globalAlpha = 0.35; ctx.lineWidth = 2 * k; line([0, 0, 0], [1.8, 0, 0]); ctx.globalAlpha = 1;
+    const BS = P([1.8, 0, 0]); ctx.beginPath(); ctx.arc(BS[0], BS[1], 4.5 * k, 0, Math.PI * 2); ctx.fillStyle = pal.ink; ctx.fill();
+    // the ω axis and the posts that hold the χ ring on the turntable
+    ctx.strokeStyle = AX.om; ctx.globalAlpha = 0.8; ctx.lineWidth = 1.3 * k; ctx.setLineDash([5 * k, 4 * k]); line([0, 0, zb], [0, 0, 1.95]); ctx.setLineDash([]); ctx.globalAlpha = 1;
+    ctx.strokeStyle = AX.om; ctx.lineWidth = 4 * k;
+    for (const sg of [-1, 1]) { const top = ringPt(-Math.PI / 2 + sg * 0.62); line([top[0], top[1], zb], top); }
+    // the χ ring, back half first: segments behind the crystal are drawn before it, the front half after it
+    const segs = [];
+    for (let i = 0; i < 96; i++) { const p0 = ringPt((i / 96) * 2 * Math.PI), p1 = ringPt(((i + 1) / 96) * 2 * Math.PI); segs.push({ p0, p1, front: dot(add(p0, p1), v) > 0 }); }
+    const drawRing = (front) => {
+      ctx.lineCap = "butt"; ctx.strokeStyle = AX.chi; ctx.lineWidth = 7 * k; ctx.globalAlpha = front ? 0.8 : 0.4;
+      for (const g of segs) if (g.front === front) line(g.p0, g.p1);
+      ctx.globalAlpha = 1; ctx.lineCap = "round";
+    };
+    drawRing(false);
+    // collected spots, then diffracted rays and live spots, as in the single-crystal view
+    const accRef = FC.acc.reduce((m, a) => Math.max(m, a.I), 1);
+    for (const a of FC.acc) { const q = P(onPlate(a.y, a.z)); ctx.beginPath(); ctx.arc(q[0], q[1], (1.2 + 3 * Math.sqrt(a.I / accRef)) * k, 0, Math.PI * 2); ctx.fillStyle = pal.inph; ctx.globalAlpha = 0.7; ctx.fill(); ctx.globalAlpha = 1; }
+    for (const L of FC.live) {
+      if (L.r.absent) continue;
+      const isSel = L.r.key === FC.sel; ctx.strokeStyle = pal.hit; ctx.globalAlpha = 0.25 + 0.75 * Math.min(1, L.I * 3);
+      if (L.det) { ctx.lineWidth = (isSel ? 3 : 1.2 + 2 * Math.sqrt(L.I)) * k; line([0, 0, 0], onPlate(L.det[0], L.det[1])); }
+      else { ctx.lineWidth = 1.2 * k; ctx.setLineDash([4 * k, 4 * k]); line([0, 0, 0], mul(norm(L.kp), 2.2)); ctx.setLineDash([]); }
+      ctx.globalAlpha = 1;
+    }
+    for (const L of FC.live) {
+      if (L.r.absent || !L.det) continue;
+      const q = P(onPlate(L.det[0], L.det[1])), rad = (2 + 5 * Math.sqrt(Math.min(1, L.I))) * k;
+      ctx.beginPath(); ctx.arc(q[0], q[1], rad, 0, Math.PI * 2); ctx.fillStyle = pal.hit; ctx.fill();
+      if (L.r.key === FC.sel) { ctx.strokeStyle = pal.mark; ctx.lineWidth = 2 * k; ctx.beginPath(); ctx.arc(q[0], q[1], rad + 3 * k, 0, Math.PI * 2); ctx.stroke(); }
+    }
+    // the χ axis, and φ: carriage on the ring, the goniometer head and its axis
+    ctx.strokeStyle = AX.chi; ctx.globalAlpha = 0.85; ctx.lineWidth = 1.3 * k; ctx.setLineDash([5 * k, 4 * k]); line(mul(chiAx, -1.95), mul(chiAx, 1.95)); ctx.setLineDash([]); ctx.globalAlpha = 1;
+    ctx.strokeStyle = AX.phi; ctx.globalAlpha = 0.85; ctx.lineWidth = 1.3 * k; ctx.setLineDash([5 * k, 4 * k]); line(mul(phiAx, -0.5), mul(phiAx, 1.15)); ctx.setLineDash([]); ctx.globalAlpha = 1;
+    ctx.strokeStyle = AX.phi; ctx.lineWidth = 7 * k; line(mul(phiAx, -Rc), mul(phiAx, -0.62));
+    ctx.strokeStyle = pal.edge; ctx.lineWidth = 1.6 * k; line(mul(phiAx, -0.62), mul(phiAx, -0.3));
+    const car = P(mul(phiAx, -Rc)); ctx.beginPath(); ctx.arc(car[0], car[1], 6.5 * k, 0, Math.PI * 2); ctx.fillStyle = AX.phi; ctx.fill(); ctx.strokeStyle = pal.edge; ctx.lineWidth = 1 * k; ctx.stroke();
+    // the crystal
+    drawCrystal(ctx, { P, s, cs: 0.9, R: FC.R, v, sel, lat: FC.lat, pal, k });
+    drawRing(true);
+    // which way each circle turns
+    const n2 = cross(phiAx, chiAx);
+    arc(mul(phiAx, -0.98), chiAx, n2, 0.3, 0.4, 5.3, AX.phi);
+    label("φ", add(mul(phiAx, -0.98), mul(chiAx, -0.56)), AX.phi);
+    arc([0, 0, 0], yp, Z, Rc + 0.24, (55 * Math.PI) / 180, (125 * Math.PI) / 180, AX.chi);
+    label("χ", ringPt(Math.PI / 2, Rc + 0.5), AX.chi);
+    arc([0, 0, zb], [1, 0, 0], [0, 1, 0], 1.28, (200 * Math.PI) / 180, (250 * Math.PI) / 180, AX.om);
+    label("ω", [1.55 * Math.cos((225 * Math.PI) / 180), 1.55 * Math.sin((225 * Math.PI) / 180), zb], AX.om);
+    // angles at the top right, the selected planes at the top left
+    ctx.textBaseline = "middle"; ctx.font = `600 ${13 * k}px ${MONO}`;
+    [["ω", FC.om, AX.om], ["χ", FC.chi, AX.chi], ["φ", FC.phi, AX.phi], ["2θ", FC.arm, pal.ink]].forEach(([n, val, col], i) => {
+      const y = (20 + 19 * i) * k; ctx.textAlign = "left"; ctx.fillStyle = col; ctx.fillText(n, W - 98 * k, y);
+      ctx.textAlign = "right"; ctx.fillStyle = pal.ink; ctx.fillText(sdeg(val), W - 12, y);
+    });
+    ctx.textAlign = "right"; ctx.font = font(11, 500); ctx.fillStyle = pal.muted;
+    ctx.fillText(FC.mode === "free" ? "free rotation" : "four-circle", W - 12, (20 + 19 * 4) * k);
+    ctx.textAlign = "left"; ctx.fillText("Not to scale: the crystal and detector are drawn enlarged.", 12, H - 14);
+    if (sel) {
+      ctx.fillStyle = pal.ink; ctx.font = `500 ${13 * k}px ${MONO}`;
+      ctx.fillText(`${fmt(sel.hkl)} planes   d = ${sel.d.toFixed(4)} Å`, 12, 20 * k);
+      const keyRow = (y, fill, txt) => { ctx.beginPath(); ctx.arc(18, y, 5 * k, 0, Math.PI * 2); ctx.fillStyle = fill; ctx.fill(); ctx.strokeStyle = pal.edge; ctx.lineWidth = 0.9 * k; ctx.stroke();
+        ctx.fillStyle = pal.muted; ctx.font = font(11, 500); ctx.fillText(txt, 30, y); };
+      keyRow(42 * k, pal.hit, "atoms on the planes: scatter in step");
+      if (cellAtoms(FC.lat).some((a) => phaseClass(dot(sel.hkl, a.r)) === 0.5)) keyRow(60 * k, pal.bad, "atoms halfway between: scatter out of step");
+    }
+  }
+
+  /* ----- detector image on the arm: cones of constant 2θ cut the tilted plate in ellipses and hyperbolas ----- */
+  let fcDetGeom = null;
+  function drawFcDetector(ctx, W, H, pal) {
+    ctx.fillStyle = pal.bg; ctx.fillRect(0, 0, W, H);
+    const m = 26, size = Math.min(W, H) - 2 * m, sc = size / (2 * FC.W), cx = W / 2, cy = H / 2, half = size / 2;
+    const X = (y) => cx - y * sc, Y = (z) => cy - z * sc; // looking from the crystal, the plate's −y side is on the right
+    fcDetGeom = { X, Y };
+    ctx.fillStyle = pal.soft; ctx.fillRect(cx - half, cy - half, size, size);
+    ctx.strokeStyle = pal.edge; ctx.lineWidth = 1.2; ctx.strokeRect(cx - half, cy - half, size, size);
+    ctx.save(); ctx.beginPath(); ctx.rect(cx - half, cy - half, size, size); ctx.clip();
+    const t2 = FC.arm * DEG, c2 = Math.cos(t2), s2 = Math.sin(t2);
+    const proj = (q) => { const den = q[0] * c2 + q[1] * s2; if (den <= 0.02) return null; const f = FC.D / den; return [f * (q[1] * c2 - q[0] * s2), f * q[2]]; };
+    ctx.font = `500 11px ${SANS}`; ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+    for (let t = 10; t < 180; t += 10) {
+      const st = Math.sin(t * DEG), ct = Math.cos(t * DEG);
+      let pen = false, best = null; ctx.beginPath();
+      for (let i = 0; i <= 360; i++) {
+        const ps = i * DEG, d = proj([ct, st * Math.cos(ps), st * Math.sin(ps)]);
+        if (!d || Math.abs(d[0]) > 4 * FC.W || Math.abs(d[1]) > 4 * FC.W) { pen = false; continue; }
+        const x = X(d[0]), y = Y(d[1]); pen ? ctx.lineTo(x, y) : ctx.moveTo(x, y); pen = true;
+        // label where the curve runs furthest up and to the right inside the plate
+        if (Math.abs(d[0]) < FC.W * 0.82 && Math.abs(d[1]) < FC.W * 0.86 && (!best || x - y > best[0] - best[1])) best = [x, y];
+      }
+      ctx.strokeStyle = pal.line; ctx.lineWidth = 1; ctx.stroke();
+      if (best) { ctx.fillStyle = pal.muted; ctx.fillText(`${t}°`, best[0] + 3, best[1] - 3); }
+    }
+    const accRef = FC.acc.reduce((mx, a) => Math.max(mx, a.I), 1);
+    for (const a of FC.acc) {
+      ctx.beginPath(); ctx.arc(X(a.y), Y(a.z), 1.6 + 4 * Math.sqrt(a.I / accRef), 0, Math.PI * 2); ctx.fillStyle = pal.inph; ctx.globalAlpha = 0.8; ctx.fill(); ctx.globalAlpha = 1;
+      if (a === FC.accNote) { ctx.strokeStyle = pal.mark; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(X(a.y), Y(a.z), 6 + 4 * Math.sqrt(a.I / accRef), 0, Math.PI * 2); ctx.stroke(); }
+    }
+    const labelled = [];
+    FC.live.filter((L) => L.det && !L.r.absent).forEach((L, i) => {
+      const x = X(L.det[0]), y = Y(L.det[1]), rad = 3 + 7 * Math.sqrt(Math.min(1, L.I));
+      ctx.beginPath(); ctx.arc(x, y, rad + 4, 0, Math.PI * 2); ctx.fillStyle = pal.hit; ctx.globalAlpha = 0.25; ctx.fill(); ctx.globalAlpha = 1;
+      ctx.beginPath(); ctx.arc(x, y, rad, 0, Math.PI * 2); ctx.fill();
+      if (L.r.key === FC.sel) { ctx.strokeStyle = pal.mark; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, rad + 5, 0, Math.PI * 2); ctx.stroke(); }
+      if (i < 10 || L.r.key === FC.sel) labelled.push([x, y, rad, L.r]);
+    });
+    ctx.font = `500 11px ${MONO}`; ctx.textAlign = "center";
+    for (const [x, y, rad, r] of labelled) {
+      const t = hklLabel(r.hkl), hw = ctx.measureText(t).width / 2 + 3;
+      haloText(ctx, t, Math.min(cx + half - hw, Math.max(cx - half + hw, x)), y - rad - 8 < cy - half + 10 ? y + rad + 14 : y - rad - 8, pal.ink, pal.soft, 1);
+    }
+    // the straight-through beam, where it would hit the plate
+    const bs = detOf(FC, [1, 0, 0]);
+    if (bs) { ctx.beginPath(); ctx.arc(X(bs[0]), Y(bs[1]), 3 * sc, 0, Math.PI * 2); ctx.fillStyle = pal.ink; ctx.fill(); }
+    ctx.restore();
+    ctx.font = `500 11px ${SANS}`; ctx.fillStyle = pal.muted; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+    ctx.fillText(`${2 * FC.W} mm square, ${FC.D} mm from the crystal, arm at 2θ = ${sdeg(FC.arm)}${bs ? " · beam stop shown" : ""}`, cx, H - 8);
+  }
+
+  /* ----- status and interaction ----- */
+  const fcPanel = new CanvasPanel($("#cv-fc"), drawFcSetup);
+  const fcDetPanel = new CanvasPanel($("#cv-fcdet"), drawFcDetector);
+  const fcEwPanel = new CanvasPanel($("#cv-fcew"), (ctx, W, H, pal) => drawEwaldFor(FC, FCCAM, ctx, W, H, pal));
+  function fcRender() {
+    sxdCompute(FC); sxStatusFor(FC, FC_IDS); fcPanel.draw(); fcDetPanel.draw(); fcEwPanel.draw(); fcSyncControls();
+    const [lo, hi] = fcCoverage(), ex = SXEX[FC.lat];
+    $("#fEx").textContent = `${Math.abs(ex.a - FC.a) < 1e-6 ? `Example values: ${ex.name}, a = ${ex.a} Å. ` : ""}With the arm at 2θ = ${sdeg(FC.arm)}, the detector catches 2θ from ${lo.toFixed(0)}° to ${hi.toFixed(0)}°.`;
+  }
+  function fcChanged() {
+    const a = parseFloat($("#fA").value);
+    if (a >= 2 && a <= 20) FC.a = a;
+    FC.lat = $("#fLat").value; FC.lam = SXSRC[$("#fSrc").value]; FC.D = +$("#fD").value; FC.eta = +$("#fEta").value;
+    $("#fDOut").textContent = `${FC.D} mm`; $("#fEtaOut").textContent = `${FC.eta.toFixed(1)}°`;
+    fcSetR(); sxdSetup(FC); fcRender();
+  }
+  document.querySelectorAll('input[name="fMode"]').forEach((r) => r.addEventListener("change", () => { setFcMode(r.value); fcRender(); }));
+  document.querySelectorAll("#fGonioCard .gon-row").forEach((row) => {
+    const ax = row.dataset.ax;
+    row.querySelector("input").addEventListener("input", (e) => { stopFcScan(); fcSetAngle(ax, +e.target.value); });
+    row.querySelectorAll("[data-step]").forEach((b) => b.addEventListener("click", () => { stopFcScan(); fcSetAngle(ax, FC[ax] + +b.dataset.step); }));
+    const sb = row.querySelector("[data-scan]"); if (sb) sb.addEventListener("click", () => startFcScan(ax));
+  });
+  $("#fStop").addEventListener("click", stopFcScan);
+  $("#fBring").addEventListener("click", fcBring);
+  ["#fh", "#fk", "#fl"].forEach((id) => $(id).addEventListener("keydown", (e) => { if (e.key === "Enter") fcBring(); }));
+  $("#fZero").addEventListener("click", () => { stopFcScan(); FC.om = FC.chi = FC.phi = 0; fcSetR(); fcRender(); });
+  document.querySelectorAll("[data-mount]").forEach((b) => b.addEventListener("click", () => {
+    stopFcScan(); FC.pinned = false; FC.accNote = null;
+    FC.U = b.dataset.mount === "random" ? randomRotation() : orientVertical(b.dataset.mount.split(",").map(Number));
+    FC.om = FC.chi = FC.phi = 0; fcSetR(); fcRender();
+  }));
+  $("#fLat").addEventListener("change", () => { $("#fA").value = SXEX[$("#fLat").value].a; FC.pinned = false; fcChanged(); });
+  $("#fSrc").addEventListener("change", fcChanged);
+  ["#fA", "#fD", "#fEta"].forEach((id) => $(id).addEventListener("input", fcChanged));
+  $("#fAcc").addEventListener("change", (e) => { FC.accumulate = e.target.checked; fcRender(); });
+  $("#fClear").addEventListener("click", () => { FC.acc = []; FC.accNote = null; fcRender(); });
+  $("#fStatus").addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.key) { FC.sel = b.dataset.key; FC.pinned = true; FC.accNote = null; fcRender(); }
+    else if (b.id === "fUnpin") { FC.pinned = false; FC.accNote = null; fcRender(); }
+  });
+  $("#cv-fcdet").addEventListener("click", (e) => {
+    if (!fcDetGeom) return;
+    const r = $("#cv-fcdet").getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+    let best = null, bd = 14;
+    for (const L of FC.live) { if (!L.det || L.r.absent) continue; const d = Math.hypot(fcDetGeom.X(L.det[0]) - x, fcDetGeom.Y(L.det[1]) - y); if (d < bd) { bd = d; best = L; } }
+    if (best) { FC.sel = best.r.key; FC.pinned = true; FC.accNote = null; fcRender(); return; }
+    let grp = null; bd = 10;
+    for (const a of FC.acc) { const d = Math.hypot(fcDetGeom.X(a.y) - x, fcDetGeom.Y(a.z) - y); if (d < bd) { bd = d; grp = a; } }
+    if (grp) { FC.accNote = grp; FC.sel = grp.refl[0].key; FC.pinned = true; fcRender(); }
+  });
+  // In free rotation, dragging turns the crystal like a trackball; in four-circle mode only the circles turn it.
+  [$("#cv-fc"), $("#cv-fcew")].forEach((cv) => {
+    let drag = null;
+    cv.addEventListener("pointerdown", (e) => {
+      if (FC.mode !== "free") { fcSyncControls(true); return; }
+      drag = { x: e.clientX, y: e.clientY }; cv.setPointerCapture(e.pointerId); stopFcScan();
+    });
+    cv.addEventListener("pointermove", (e) => {
+      if (!drag) return;
+      const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.x = e.clientX; drag.y = e.clientY;
+      if (dx) fcRotateFree(FCCAM.up, dx * 0.4 * DEG);
+      if (dy) fcRotateFree(FCCAM.right, dy * 0.4 * DEG);
+      fcRender();
+    });
+    const end = () => { drag = null; };
+    cv.addEventListener("pointerup", end); cv.addEventListener("pointercancel", end);
+    cv.addEventListener("keydown", (e) => {
+      const st = e.shiftKey ? 5 : 0.5;
+      if (FC.mode === "free") {
+        const map = { ArrowLeft: [FCCAM.up, -st], ArrowRight: [FCCAM.up, st], ArrowUp: [FCCAM.right, -st], ArrowDown: [FCCAM.right, st] };
+        if (!map[e.key]) return; e.preventDefault(); stopFcScan(); fcRotateFree(map[e.key][0], map[e.key][1] * DEG); fcRender();
+      } else {
+        const map = { ArrowLeft: ["om", -st], ArrowRight: ["om", st], ArrowUp: ["chi", st], ArrowDown: ["chi", -st] };
+        if (!map[e.key]) return; e.preventDefault(); stopFcScan(); fcSetAngle(map[e.key][0], FC[map[e.key][0]] + map[e.key][1]);
+      }
+    });
+  });
+  function fcApplyLink(q) {
+    const lat = q.get("lat"), a = num(q.get("a"), 2, 20), D = num(q.get("dist"), 40, 120), eta = num(q.get("eta"), 0.1, 2), arm = num(q.get("arm"), -150, 150);
+    if (lat && SXEX[lat]) $("#fLat").value = lat;
+    $("#fA").value = a || SXEX[$("#fLat").value].a;
+    if (SXSRC[q.get("src")]) $("#fSrc").value = q.get("src");
+    if (D) $("#fD").value = Math.round(D);
+    if (eta) $("#fEta").value = eta;
+    if (arm !== null) FC.arm = arm;
+    for (const ax of FC_CIRCLES) { const x = num(q.get(ax), -360, 360); if (x !== null) FC[ax] = wrap180(x); }
+    const qq = String(q.get("q") || "").split(",").map(Number);
+    if (qq.length === 4 && qq.every(Number.isFinite) && Math.hypot(...qq) > 0.5) FC.U = orthonormal(quatToMat(qq));
+    stopFcScan(); setFcMode(q.get("mode") === "gonio" ? "gonio" : "free");
+    FC.pinned = false; fcChanged();
+  }
+
+  // Start in free rotation with c along φ, turned until a few spots are on the detector.
+  FC.U = orientVertical([0, 0, 1]); fcSetR(); fcRotateFree([0, 0, 1], 4 * DEG);
+  fcChanged();
+  for (let i = 0; i < 600; i++) { sxdCompute(FC); if (FC.live.filter((L) => !L.r.absent && L.det && L.w > 0.5).length >= 2) break; fcRotateFree([0, 0, 1], 0.1 * DEG); }
+  setFcMode("free"); fcRender();
+
+  const TAB_NAMES = { single: "Single plane", guided: "Step by step", set: "Matching set", cell: "Non-cubic cells", xrd: "X-ray diffraction", index: "Peaks to planes", sxd: "Single crystal", fc: "4-circle SCXRD" };
   const curTab = () => TABS.find((t) => !$("#view-" + t).hidden) || "single";
   const setHKLSingle = (t) => { $("#h").value = t[0]; $("#k").value = t[1]; $("#l").value = t[2]; $("#l").dispatchEvent(new Event("input", { bubbles: true })); };
 
@@ -5321,6 +5858,16 @@ img { max-width: 100%; }
       body: "Spots light up as their dots cross the sphere and fade as they leave. Tick <b>Collect spots while rotating</b> and press <b>Rotate</b>: the detector then keeps every spot, building a rotation photograph. Click a spot to see its planes." },
     { ch: "sxd", tab: "sxd", sel: "#sStatus", title: "Which planes, and why",
       body: "The list shows every reflection in diffracting position, with d, 2θ, intensity and whether its spot is seen on the detector or misses it. Points on the sphere but with F = 0 are listed as absent: Bragg's law is met, yet the atoms cancel the beam." },
+
+    { ch: "fc", tab: "fc", sel: "#fSetupCard", title: "A four-circle diffractometer",
+      body: "The crystal sits on an Eulerian cradle. Three circles turn it: <b>ω</b> (teal) turns the whole cradle about the vertical axis, <b>χ</b> (green) tilts the crystal round the big ring, and <b>φ</b> (orange) spins it about its mounting pin. The detector rides on the <b>2θ</b> arm." },
+    { ch: "fc", tab: "fc", sel: "#fGonioCard", title: "Only the circles turn the crystal",
+      body: "Free rotation is on to start with, so you can drag the crystal in any direction, which no real instrument can do. Choose <b>Four-circle</b> to turn it only about ω, χ and φ, with the sliders or the <b>Scan</b> buttons.",
+      task: { text: "Try it: choose Four-circle.", check: () => FC.mode === "gonio" } },
+    { ch: "fc", tab: "fc", sel: "#fBring", title: "Bring a reflection into position",
+      body: "Type (h k l) and press <b>Bring into position</b>. χ and φ turn the plane normal into the horizontal plane, ω = θ makes it bisect the incident and diffracted beams, and the arm swings to 2θ: the spot lands in the middle of the detector." },
+    { ch: "fc", tab: "fc", sel: "#fDetCard", title: "The detector on its arm",
+      body: "Swung out on the arm, the flat detector meets the cones of constant 2θ at a slant, so the circles become ellipses and hyperbolas. Tick <b>Collect spots while rotating</b> and scan one circle to record a frame, as a diffractometer does." },
 
     { ch: "outro", sel: "#openManual", title: "That's the tour",
       body: "The <b>Manual</b> explains every part and the theory behind it, including a glossary. <b>Copy link</b> saves the view you are looking at, and every practice tab can print worksheets. Restart the whole tour, or the tour of one tab, from the <b>Tour</b> button." },
@@ -5470,6 +6017,11 @@ img { max-width: 100%; }
       q.set("lat", SX.lat); q.set("a", SX.a); q.set("src", $("#sSrc").value); q.set("dist", SX.D); q.set("eta", SX.eta);
       if (SX.layer !== "all") q.set("layer", SX.layer);
       q.set("q", matToQuat(SX.R).map((x) => (Math.abs(x) < 5e-6 ? 0 : x).toFixed(5)).join(","));
+    } else if (t === "fc") {
+      q.set("lat", FC.lat); q.set("a", FC.a); q.set("src", $("#fSrc").value); q.set("dist", FC.D); q.set("eta", FC.eta); q.set("arm", FC.arm.toFixed(1));
+      FC_CIRCLES.forEach((ax) => q.set(ax, FC[ax].toFixed(2)));
+      if (FC.mode !== "free") q.set("mode", FC.mode);
+      q.set("q", matToQuat(FC.U).map((x) => (Math.abs(x) < 5e-6 ? 0 : x).toFixed(5)).join(","));
     }
     return q.toString().replace(/%2C/gi, ",");
   }
@@ -5535,6 +6087,8 @@ img { max-width: 100%; }
       const qq = String(q.get("q") || "").split(",").map(Number);
       if (qq.length === 4 && qq.every(Number.isFinite) && Math.hypot(...qq) > 0.5) SX.R = orthonormal(quatToMat(qq));
       SX.pinned = false; sxdChanged();
+    } else if (t === "fc") {
+      fcApplyLink(q);
     }
     return true;
   }
