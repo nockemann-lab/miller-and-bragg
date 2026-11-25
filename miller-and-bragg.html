@@ -368,6 +368,7 @@ table.xlist { width: 100%; max-width: none; margin: 0; }
 .gon-row input[type=range] { width: 100%; min-width: 0; accent-color: var(--plane); }
 .gon-row output { font: 500 14px var(--font-mono); text-align: right; }
 .gon-row .btns { flex-wrap: nowrap; gap: 4px; }
+.gon-row [data-scan] { min-width: 4.6em; }
 @media (max-width: 860px) { #cv-fc { aspect-ratio: 1.25 / 1; } #cv-fcew { aspect-ratio: 1.45 / 1; } }
 @media (max-width: 560px) { .gon-row { grid-template-columns: 2.6em minmax(0, 1fr) 4.4em; } .gon-row .btns { grid-column: 2 / -1; justify-content: flex-end; } }
 
@@ -1141,7 +1142,7 @@ img { max-width: 100%; }
         <canvas id="cv-fc" tabindex="0" aria-label="Four-circle diffractometer: the X-ray source on the left, the crystal on an Eulerian cradle with its ω, χ and φ circles, and the detector on the 2θ arm. Drag or use the arrow keys to turn the crystal."></canvas>
         <div class="stage-foot">
           <span class="fine" id="fHint"></span>
-          <div class="btns"><button id="fStop" class="primary" hidden>Stop scan</button></div>
+          <div class="btns"><button id="fStop" class="primary" style="visibility:hidden">Stop scan</button></div>
         </div>
       </div>
       <div class="xgrid">
@@ -1282,7 +1283,7 @@ img { max-width: 100%; }
 
       <section id="man-start">
         <h2>Quick start</h2>
-        <p>New to Miller indices? Start with <b>Single plane</b>, then practise in <b>Step by step</b>. The <b>Tour</b> button at the top walks you through the whole app in about seven minutes, or through just the tab you have open. Choose a mode from the tabs at the top of the page.</p>
+        <p>New to Miller indices? Start with <b>Single plane</b>, then practise in <b>Step by step</b>. The <b>Tour</b> button at the top walks you through the whole app in about eight minutes, or through just the tab you have open. Choose a mode from the tabs at the top of the page.</p>
         <table class="ic man-table">
           <thead><tr><th>Tab</th><th>Use it to</th></tr></thead>
           <tbody>
@@ -1752,6 +1753,16 @@ img { max-width: 100%; }
   const LETTERS = "ABCDEF";
   const AX = ["x", "y", "z"], IDX = ["h", "k", "l"];
   const $ = (s) => document.querySelector(s);
+  // Write text only when it changes. During a scan the page updates every frame, and replacing the text under
+  // the pointer between pressing and releasing a button makes the browser drop the click.
+  const setHTML = (el, s) => { if (el.__html !== s) { el.__html = s; el.innerHTML = s; } };
+  const setText = (el, s) => { if (el.textContent !== s) el.textContent = s; };
+  // For buttons inside content that is rebuilt every frame (the reflection lists): act on the press, not the release.
+  // A keyboard press still arrives as a click with detail 0.
+  const onPress = (el, f) => {
+    el.addEventListener("pointerdown", (e) => { const b = e.target.closest("button"); if (e.button === 0 && !(b && b.disabled)) f(e); });
+    el.addEventListener("click", (e) => { if (e.detail === 0) f(e); });
+  };
   // System fonts only: nothing is fetched from font services.
   const SANS = 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
   const MONO = 'ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace';
@@ -5303,11 +5314,11 @@ img { max-width: 100%; }
   function sxStatusFor(S, ids) {
     const live = S.live, onDet = live.filter((L) => !L.r.absent && L.det), sel = selRefl(S);
     $(ids.head).className = `status ${onDet.length ? "ok" : "neutral"}`;
-    $(ids.head).innerHTML = `<b>${onDet.length ? `${onDet.length} spot${onDet.length > 1 ? "s" : ""} on the detector` : "No spot on the detector at this orientation"}</b>`;
-    $(ids.list).innerHTML = live.slice(0, 30).map((L) => `<tr class="${L.r.absent ? "absent" : ""} ${L.r.key === S.sel ? "on" : ""}">
+    setHTML($(ids.head), `<b>${onDet.length ? `${onDet.length} spot${onDet.length > 1 ? "s" : ""} on the detector` : "No spot on the detector at this orientation"}</b>`);
+    setHTML($(ids.list), live.slice(0, 30).map((L) => `<tr class="${L.r.absent ? "absent" : ""} ${L.r.key === S.sel ? "on" : ""}">
       <td><button class="rowbtn" data-key="${L.r.key}">${fmt(L.r.hkl)}</button></td><td>${L.r.d.toFixed(3)}</td><td>${L.r.tt.toFixed(2)}</td>
       <td>${L.r.absent ? "absent" : (L.I * 100).toFixed(L.I < 0.1 ? 1 : 0)}</td><td>${L.r.absent ? "no spot" : L.det ? "seen" : "missed"}</td></tr>`).join("")
-      || `<tr><td colspan="5" class="fine">None. Rotate the crystal until a reciprocal lattice point touches the Ewald sphere.</td></tr>`;
+      || `<tr><td colspan="5" class="fine">None. Rotate the crystal until a reciprocal lattice point touches the Ewald sphere.</td></tr>`);
     let why;
     if (!sel) why = "Rotate the crystal: a spot appears whenever a reciprocal lattice point crosses the Ewald sphere.";
     else {
@@ -5323,7 +5334,7 @@ img { max-width: 100%; }
       }
       if (S.pinned) why += ` <button class="link" id="${ids.unpin}">Follow the strongest spot again</button>`;
     }
-    $(ids.why).innerHTML = why;
+    setHTML($(ids.why), why);
   }
   const SX_IDS = { head: "#sHead", list: "#sList", why: "#sWhy", unpin: "sUnpin", miss: "Move the detector closer to catch it." };
   const sxdStatus = () => sxStatusFor(SX, SX_IDS);
@@ -5361,7 +5372,7 @@ img { max-width: 100%; }
     SX.R = b.dataset.orient === "random" ? randomRotation() : orientVertical(b.dataset.orient.split(",").map(Number));
     sxdRender();
   }));
-  $("#sStatus").addEventListener("click", (e) => {
+  onPress($("#sStatus"), (e) => {
     const b = e.target.closest("button"); if (!b) return;
     if (b.dataset.key) { SX.sel = b.dataset.key; SX.pinned = true; SX.accNote = null; sxdRender(); }
     else if (b.id === "sUnpin") { SX.pinned = false; SX.accNote = null; sxdRender(); }
@@ -5491,18 +5502,19 @@ img { max-width: 100%; }
     const gon = FC.mode === "gonio";
     document.querySelectorAll("#fGonioCard .gon-row").forEach((row) => {
       const ax = row.dataset.ax, off = ax !== "arm" && !gon;
-      row.querySelector("input").value = FC[ax].toFixed(1);
-      row.querySelector("output").textContent = sdeg(FC[ax]);
+      const inp = row.querySelector("input"), v = FC[ax].toFixed(1); if (inp.value !== v) inp.value = v;
+      setText(row.querySelector("output"), sdeg(FC[ax]));
       row.classList.toggle("off", off);
       row.querySelectorAll("input, button").forEach((el) => { el.disabled = off; });
-      const sb = row.querySelector("[data-scan]"); if (sb) sb.textContent = FC.scan && FC.scan.ax === ax ? "Stop" : "Scan";
+      const sb = row.querySelector("[data-scan]"); if (sb) setText(sb, FC.scan && FC.scan.ax === ax ? "Stop" : "Scan");
     });
-    $("#fStop").hidden = !FC.scan;
-    $("#fStop").textContent = FC.scan ? `Stop the ${{ om: "ω", chi: "χ", phi: "φ" }[FC.scan.ax]} scan` : "Stop scan";
+    // The button keeps its space while hidden, so showing it does not push the controls below out from under the pointer.
+    $("#fStop").style.visibility = FC.scan ? "visible" : "hidden";
+    setText($("#fStop"), FC.scan ? `Stop the ${{ om: "ω", chi: "χ", phi: "φ" }[FC.scan.ax]} scan` : "Stop scan");
     ["#cv-fc", "#cv-fcew"].forEach((id) => $(id).classList.toggle("locked", gon));
-    $("#fHint").innerHTML = gon
+    setHTML($("#fHint"), gon
       ? `${nudge ? "<b>The crystal is on the goniometer.</b> " : ""}Four-circle mode: the crystal turns only about ω, χ and φ. Use the goniometer controls, or the arrow keys (← → for ω, ↑ ↓ for χ).`
-      : "Free rotation: drag anywhere in the picture to turn the crystal in any direction. A real diffractometer can only turn it about ω, χ and φ: choose Four-circle to see how.";
+      : "Free rotation: drag anywhere in the picture to turn the crystal in any direction. A real diffractometer can only turn it about ω, χ and φ: choose Four-circle to see how.");
   }
 
   /* ----- the instrument: source, Eulerian cradle, crystal, 2θ arm and detector ----- */
@@ -5683,7 +5695,7 @@ img { max-width: 100%; }
   function fcRender() {
     sxdCompute(FC); sxStatusFor(FC, FC_IDS); fcPanel.draw(); fcDetPanel.draw(); fcEwPanel.draw(); fcSyncControls();
     const [lo, hi] = fcCoverage(), ex = SXEX[FC.lat];
-    $("#fEx").textContent = `${Math.abs(ex.a - FC.a) < 1e-6 ? `Example values: ${ex.name}, a = ${ex.a} Å. ` : ""}With the arm at 2θ = ${sdeg(FC.arm)}, the detector catches 2θ from ${lo.toFixed(0)}° to ${hi.toFixed(0)}°.`;
+    setText($("#fEx"), `${Math.abs(ex.a - FC.a) < 1e-6 ? `Example values: ${ex.name}, a = ${ex.a} Å. ` : ""}With the arm at 2θ = ${sdeg(FC.arm)}, the detector catches 2θ from ${lo.toFixed(0)}° to ${hi.toFixed(0)}°.`);
   }
   function fcChanged() {
     const a = parseFloat($("#fA").value);
@@ -5697,9 +5709,9 @@ img { max-width: 100%; }
     const ax = row.dataset.ax;
     row.querySelector("input").addEventListener("input", (e) => { stopFcScan(); fcSetAngle(ax, +e.target.value); });
     row.querySelectorAll("[data-step]").forEach((b) => b.addEventListener("click", () => { stopFcScan(); fcSetAngle(ax, FC[ax] + +b.dataset.step); }));
-    const sb = row.querySelector("[data-scan]"); if (sb) sb.addEventListener("click", () => startFcScan(ax));
+    const sb = row.querySelector("[data-scan]"); if (sb) onPress(sb, () => startFcScan(ax));
   });
-  $("#fStop").addEventListener("click", stopFcScan);
+  onPress($("#fStop"), stopFcScan);
   $("#fBring").addEventListener("click", fcBring);
   ["#fh", "#fk", "#fl"].forEach((id) => $(id).addEventListener("keydown", (e) => { if (e.key === "Enter") fcBring(); }));
   $("#fZero").addEventListener("click", () => { stopFcScan(); FC.om = FC.chi = FC.phi = 0; fcSetR(); fcRender(); });
@@ -5713,7 +5725,7 @@ img { max-width: 100%; }
   ["#fA", "#fD", "#fEta"].forEach((id) => $(id).addEventListener("input", fcChanged));
   $("#fAcc").addEventListener("change", (e) => { FC.accumulate = e.target.checked; fcRender(); });
   $("#fClear").addEventListener("click", () => { FC.acc = []; FC.accNote = null; fcRender(); });
-  $("#fStatus").addEventListener("click", (e) => {
+  onPress($("#fStatus"), (e) => {
     const b = e.target.closest("button"); if (!b) return;
     if (b.dataset.key) { FC.sel = b.dataset.key; FC.pinned = true; FC.accNote = null; fcRender(); }
     else if (b.id === "fUnpin") { FC.pinned = false; FC.accNote = null; fcRender(); }
@@ -5782,9 +5794,9 @@ img { max-width: 100%; }
 
   const TOUR = [
     { ch: "intro", title: "Welcome to Miller & Bragg",
-      body: "This app takes you from Miller indices to the peaks of an X-ray powder pattern and the spots of a single crystal, and back. The tour points out each part in turn and takes about seven minutes. You can stop at any time with <b>Esc</b> or the cross, and restart it from the <b>Tour</b> button." },
-    { ch: "intro", sel: ".tabs", title: "Seven parts, from planes to peaks and back",
-      body: "Work through the tabs from left to right: draw planes, practise indexing planes and directions, test yourself, look at non-cubic cells, see how planes produce diffraction peaks, work back from the peaks of a pattern to its planes, and finally turn a single crystal in the X-ray beam." },
+      body: "This app takes you from Miller indices to the peaks of an X-ray powder pattern and the spots of a single crystal, and back. The tour points out each part in turn and takes about eight minutes. You can stop at any time with <b>Esc</b> or the cross, and restart it from the <b>Tour</b> button." },
+    { ch: "intro", sel: ".tabs", title: "Eight parts, from planes to peaks and back",
+      body: "Work through the tabs from left to right: draw planes, practise indexing planes and directions, test yourself, look at non-cubic cells, see how planes produce diffraction peaks, work back from the peaks of a pattern to its planes, turn a single crystal in the X-ray beam, and finally mount it on a four-circle diffractometer." },
 
     { ch: "single", tab: "single", sel: "#hklCard", title: "Type the Miller indices",
       enter: (s) => { s.base = single.hkl.join(","); },
